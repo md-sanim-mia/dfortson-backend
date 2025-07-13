@@ -1,6 +1,6 @@
 # Neural Nexus Backend
 
-A robust backend API for Neural Nexus platform built with Node.js, TypeScript, Express.js, and PostgreSQL. This API provides comprehensive user management, subscription handling, and payment processing capabilities with Stripe integration.
+A robust backend API for Neural Nexus team built with Node.js, Express.js, TypeScript, and PostgreSQL. This API provides comprehensive user management, subscription handling, and payment processing capabilities with Stripe integration.
 
 ## 🚀 Features
 
