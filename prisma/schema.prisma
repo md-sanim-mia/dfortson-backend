@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(uuid())
+  fullName          String
+  email             String         @unique
+  password          String
+  profilePic        String?        @default("")
+  passwordChangedAt DateTime?
+  isVerified        Boolean        @default(false)
+  isResetPassword   Boolean        @default(false)
+  canResetPassword  Boolean        @default(false)
+  isResentOtp       Boolean        @default(false)
+  role              UserRole       @default(USER)
+  isSubscribed      Boolean        @default(false)
+  planExpiration    DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  Subscription      Subscription[]
+
+  @@map("users")
+}
+
+enum SubscriptionType {
+  payPerJob
+  monthly
+}
+
+model Subscription {
+  id              String        @id @default(uuid())
+  userId          String
+  planId          String
+  startDate       DateTime
+  endDate         DateTime?
+  amount          Float
+  stripePaymentId String        @unique
+  paymentStatus   PaymentStatus @default(COMPLETED)
+  user            User?         @relation(fields: [userId], references: [id])
+  plan            Plan?         @relation(fields: [planId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Plan {
+  id            String         @id @default(uuid())
+  planName      String
+  amount        Float
+  currency      String?        @default("eur")
+  interval      Interval?
+  intervalCount Int?
+  productId     String
+  priceId       String
+  active        Boolean?       @default(true)
+  description   String?
+  features      Json?
+  Subscription  Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("plans")
+}
+
+enum Status {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum Interval {
+  month
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+  REFUNDED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
