@@ -28,11 +28,6 @@ model User {
   @@map("users")
 }
 
-enum SubscriptionType {
-  payPerJob
-  monthly
-}
-
 model Plan {
   id            String         @id @default(uuid())
   planName      String
