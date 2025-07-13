@@ -3,7 +3,7 @@ import { PlanServices } from "./plan.service";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 
-// Create Plan
+// // Create Plan
 const createPlan = catchAsync(async (req, res) => {
   const result = await PlanServices.createPlan(req.body);
   sendResponse(res, {
@@ -13,7 +13,7 @@ const createPlan = catchAsync(async (req, res) => {
   });
 });
 
-// Get All Plans
+// // Get All Plans
 const getAllPlans = catchAsync(async (req, res) => {
   const result = await PlanServices.getAllPlans();
   sendResponse(res, {
@@ -23,7 +23,7 @@ const getAllPlans = catchAsync(async (req, res) => {
   });
 });
 
-// Get Plan by ID
+// // Get Plan by ID
 const getPlanById = catchAsync(async (req, res) => {
   const result = await PlanServices.getPlanById(req.params.planId);
   sendResponse(res, {
@@ -45,7 +45,7 @@ const deletePlan = catchAsync(async (req, res) => {
 
 export const PlanController = {
   createPlan,
-  deletePlan,
   getAllPlans,
   getPlanById,
+  deletePlan,
 };

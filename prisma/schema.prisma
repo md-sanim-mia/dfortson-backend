@@ -33,33 +33,17 @@ enum SubscriptionType {
   monthly
 }
 
-model Subscription {
-  id              String        @id @default(uuid())
-  userId          String
-  planId          String
-  startDate       DateTime
-  endDate         DateTime?
-  amount          Float
-  stripePaymentId String        @unique
-  paymentStatus   PaymentStatus @default(COMPLETED)
-  user            User?         @relation(fields: [userId], references: [id])
-  plan            Plan?         @relation(fields: [planId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  @@map("subscriptions")
-}
-
 model Plan {
   id            String         @id @default(uuid())
   planName      String
   amount        Float
-  currency      String?        @default("eur")
-  interval      Interval?
-  intervalCount Int?
+  currency      String
+  interval      Interval       @default(month)
+  intervalCount Int
+  freeTrialDays Int?
   productId     String
   priceId       String
-  active        Boolean?       @default(true)
+  active        Boolean
   description   String?
   features      Json?
   Subscription  Subscription[]
@@ -69,14 +53,28 @@ model Plan {
   @@map("plans")
 }
 
-enum Status {
-  PROCESSING
-  COMPLETED
-  FAILED
+model Subscription {
+  id              String        @id @default(uuid())
+  userId          String        @unique
+  planId          String
+  startDate       DateTime
+  endDate         DateTime?
+  amount          Float
+  stripePaymentId String        @unique
+  paymentStatus   PaymentStatus @default(PENDING)
+  user            User?         @relation(fields: [userId], references: [id])
+  plan            Plan?         @relation(fields: [planId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("subscriptions")
 }
 
 enum Interval {
+  day
+  week
   month
+  year
 }
 
 enum PaymentStatus {
@@ -84,6 +82,12 @@ enum PaymentStatus {
   COMPLETED
   CANCELED
   REFUNDED
+}
+
+enum Status {
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 enum UserRole {

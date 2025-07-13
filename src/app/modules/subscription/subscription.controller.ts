@@ -49,31 +49,31 @@ const getMySubscription = catchAsync(async (req, res) => {
   });
 });
 
-// const updateSubscription = catchAsync(async (req, res) => {
-//   const { subscriptionId } = req.params;
+const updateSubscription = catchAsync(async (req, res) => {
+  const { subscriptionId } = req.params;
 
-//   const result = await SubscriptionServices.updateSubscription(
-//     subscriptionId,
-//     req.body
-//   );
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     message: "Subscription updated successfully.",
-//     data: result,
-//   });
-// });
+  const result = await SubscriptionServices.updateSubscription(
+    subscriptionId,
+    req.body
+  );
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Subscription updated successfully.",
+    data: result,
+  });
+});
 
-// const deleteSubscription = catchAsync(async (req, res) => {
-//   const result = await SubscriptionServices.deleteSubscription(
-//     req.params.subscriptionId
-//   );
+const deleteSubscription = catchAsync(async (req, res) => {
+  const result = await SubscriptionServices.deleteSubscription(
+    req.params.subscriptionId
+  );
 
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     message: "Subscription deleted successfully.",
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Subscription deleted successfully.",
+    data: result,
+  });
+});
 
 const handleStripeWebhook = catchAsync(async (req, res) => {
   const result = await SubscriptionServices.HandleStripeWebhook(req.body);
@@ -91,4 +91,6 @@ export const SubscriptionController = {
   getMySubscription,
   handleStripeWebhook,
   getSingleSubscription,
+  updateSubscription,
+  deleteSubscription,
 };

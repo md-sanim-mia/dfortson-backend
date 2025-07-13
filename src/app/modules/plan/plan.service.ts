@@ -1,7 +1,6 @@
 import { Plan } from "@prisma/client";
 import prisma from "../../utils/prisma";
 import { stripe } from "../../utils/stripe";
-import ApiError from "../../errors/AppError";
 
 const createPlan = async (payload: Plan) => {
   const result = await prisma.$transaction(async (tx) => {
@@ -12,57 +11,33 @@ const createPlan = async (payload: Plan) => {
       active: true,
     });
 
-    if (payload.interval && !payload.intervalCount) {
-      throw new ApiError(
-        404,
-        "Interval count is required when interval is specified"
-      );
-    }
-
-    if (payload.intervalCount && !payload.interval) {
-      throw new ApiError(
-        404,
-        "Interval is required when interval count is specified"
-      );
-    }
-
     // Step 2: Create Price in Stripe
-    let price: any = {};
-    if (payload.interval && payload.intervalCount) {
-      const recurringData: any = {
-        interval: payload.interval,
-        interval_count: payload.intervalCount,
-      };
+    const recurringData: any = {
+      interval: payload.interval,
+      interval_count: payload.intervalCount,
+    };
 
-      price = await stripe.prices.create({
-        currency: "eur",
-        unit_amount: Math.round(payload.amount * 100),
-        active: true,
-        recurring: recurringData,
-        product: product.id,
-      });
-    } else {
-      price = await stripe.prices.create({
-        currency: "eur",
-        unit_amount: Math.round(payload.amount * 100),
-        active: true,
-        product: product.id,
-      });
-    }
+    const price = await stripe.prices.create({
+      currency: "usd",
+      unit_amount: Math.round(payload.amount * 100),
+      active: true,
+      recurring: recurringData,
+      product: product.id,
+    });
 
     // Step 3: Create Plan Record in Database
     const dbPlan = await tx.plan.create({
       data: {
         amount: payload.amount || 0,
         planName: payload.planName,
-        interval: payload?.interval,
-        intervalCount: payload?.intervalCount,
+        currency: "usd",
+        interval: payload.interval,
+        intervalCount: payload.intervalCount,
         productId: product.id,
         priceId: price.id,
-        active: true,
+        active: payload.active,
         description: payload.description,
-        features: payload.features,
-        planType: payload.planType || "subscription",
+        features: payload.features || [],
       },
     });
 
@@ -99,14 +74,10 @@ const deletePlan = async (planId: string) => {
     }
 
     // Step 2: Deactivate the price in Stripe
-    await stripe.prices.update(plan.priceId, {
-      active: false,
-    });
+    await stripe.prices.update(plan.priceId, { active: false });
 
     // Step 3: Deactivate the product in Stripe
-    await stripe.products.update(plan.productId, {
-      active: false,
-    });
+    await stripe.products.update(plan.productId, { active: false });
 
     // Step 4: Delete the plan record in the database
     await tx.plan.delete({

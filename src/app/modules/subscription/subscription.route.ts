@@ -16,33 +16,29 @@ router.post(
 
 router.get(
   "/my-subscription",
-  auth(UserRole.EMPLOYEE, UserRole.JOB_SEEKER, UserRole.SUPER_ADMIN),
+  auth(),
   SubscriptionController.getMySubscription
 );
 
-router.get(
-  "/",
-  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-  SubscriptionController.getAllSubscription
-);
+router.get("/", auth(), SubscriptionController.getAllSubscription);
 
 router.get(
   "/:subscriptionId",
-  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  auth(),
   SubscriptionController.getSingleSubscription
 );
 
-// router.put(
-//   "/:subscriptionId",
-//   auth(UserRole.USER, UserRole.ADMIN),
-//   SubscriptionController.updateSubscription
-// );
+router.put(
+  "/:subscriptionId",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  SubscriptionController.updateSubscription
+);
 
-// router.delete(
-//   "/:subscriptionId",
-//   auth(UserRole.ADMIN),
-//   SubscriptionController.deleteSubscription
-// );
+router.delete(
+  "/:subscriptionId",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  SubscriptionController.deleteSubscription
+);
 
 router.post("/stripe/webhook", SubscriptionController.handleStripeWebhook);
 
