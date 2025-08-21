@@ -49,7 +49,25 @@ A robust backend API for Neural Nexus team built with Node.js, Express.js, TypeS
 2. **Install dependencies**
 
    ```bash
+   npm install
+   ```
+
+   or,
+
+   ```bash
    yarn install
+   ```
+
+   or,
+
+   ```bash
+   pnpm install
+   ```
+
+   or,
+
+   ```bash
+   bun install
    ```
 
 3. **Set up environment variables**
@@ -91,24 +109,49 @@ A robust backend API for Neural Nexus team built with Node.js, Express.js, TypeS
 
    # URL Configuration
    RESET_PASS_UI_LINK=http://localhost:3000/reset-password
-   BACKEND_URL=http://localhost:5005/api/v1
-   IMAGE_URL=http://localhost:5005
+   BACKEND_URL=http://localhost:5000/api/v1
+   IMAGE_URL=http://localhost:5000
    FRONTEND_URL=http://localhost:3000
-   VERIFY_EMAIL_LINK=http://localhost:5005/api/v1/auth/verify-email
-   VERIFY_RESET_PASS_LINK=http://localhost:5005/api/v1/auth/verify-reset-password
+   VERIFY_EMAIL_LINK=http://localhost:5000/api/v1/auth/verify-email
+   VERIFY_RESET_PASS_LINK=http://localhost:5000/api/v1/auth/verify-reset-password
    ```
 
 4. **Set up the database**
 
-   ```bash
    # Generate Prisma client
+
+   ```bash
    npx prisma generate
+   ```
 
    # Run database migrations
+
+   ```bash
    npx prisma migrate dev
+   ```
 
    # Seed the database (creates super admin automatically)
+
+   ```bash
+   npm dev
+   ```
+
+   or,
+
+   ```bash
    yarn dev
+   ```
+
+   or,
+
+   ```bash
+   pnpm dev
+   ```
+
+   or,
+
+   ```bash
+   bun dev
    ```
 
 ## 🚀 Running the Application
@@ -116,14 +159,53 @@ A robust backend API for Neural Nexus team built with Node.js, Express.js, TypeS
 ### Development Mode
 
 ```bash
+npm run dev
+```
+
+or,
+
+```bash
 yarn dev
+```
+
+or,
+
+```bash
+pnpm dev
+```
+
+or,
+
+```bash
+bun dev
 ```
 
 ### Production Build
 
 ```bash
+npm build
+npm start
+```
+
+or,
+
+```bash
 yarn build
 yarn start
+```
+
+or,
+
+```bash
+pnpm build
+pnpm start
+```
+
+or,
+
+```bash
+bun build
+bun start
 ```
 
 ### Using Docker
@@ -132,7 +214,7 @@ yarn start
 docker-compose up -d
 ```
 
-The server will start on `http://localhost:5005`
+The server will start on `http://localhost:5000`
 
 ## 📁 Project Structure
 
