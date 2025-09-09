@@ -357,6 +357,7 @@ export const refreshToken = async (token: string) => {
   ) as RefreshPayload;
 
   const { email, iat } = decoded;
+  console.log(email)
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -404,6 +405,7 @@ export const refreshToken = async (token: string) => {
 
   return { accessToken };
 };
+
 
 export const AuthService = {
   getMe,

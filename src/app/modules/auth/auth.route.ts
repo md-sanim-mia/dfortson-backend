@@ -4,8 +4,25 @@ import auth from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import { AuthController } from "./auth.controller";
 import { AuthValidation } from "./auth.validation";
+import passport from "../../config/passport"
+
 
 const router = Router();
+
+// Google login redirect
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// Callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/" }),
+  (req, res) => {
+    const { accessToken } = req.user as any;
+    // Redirect to frontend with token
+    res.redirect(`http://localhost:3000/auth/success?token=${accessToken}`);
+  }
+);
+
 
 router.get("/verify-email", AuthController.verifyEmail);
 
@@ -47,5 +64,7 @@ router.post(
 router.get("/me", auth(), AuthController.getMe);
 
 router.post("/refresh-token", AuthController.refreshToken);
+
+
 
 export const AuthRoutes = router;

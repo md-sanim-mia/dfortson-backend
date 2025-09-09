@@ -130,6 +130,8 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 
+
+
 export const AuthController = {
   login,
   getMe,
@@ -141,4 +143,5 @@ export const AuthController = {
   verifyResetPassLink,
   resendResetPassLink,
   resendVerificationLink,
+
 };
