@@ -12,4 +12,8 @@ declare global {
       accessToken?: string;
     }
   }
+    interface Request {
+      user?: User; // make it non-optional
+    }
 }
+

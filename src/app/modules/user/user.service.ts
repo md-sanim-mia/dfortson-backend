@@ -58,7 +58,7 @@ const getAllUserFromDB = async (query: Record<string, unknown>) => {
   const userQuery = new QueryBuilder(prisma.user, query)
     .search(["fullName", "email"])
     .select(["id", "email", "fullName", "profilePic", "role", "isSubscribed"])
-    .paginate();
+    .paginate()
 
   const [result, meta] = await Promise.all([
     userQuery.execute(),

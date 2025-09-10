@@ -19,10 +19,20 @@ router.get(
   (req, res) => {
     const { accessToken } = req.user as any;
     // Redirect to frontend with token
-    res.redirect(`http://localhost:3000/auth/success?token=${accessToken}`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${accessToken}`);
   }
 );
 
+router.get("/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { session: false, failureRedirect: "/" }),
+  (req, res) => {
+    const { accessToken } = req.user as any;
+    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${accessToken}`);
+  }
+);
 
 router.get("/verify-email", AuthController.verifyEmail);
 

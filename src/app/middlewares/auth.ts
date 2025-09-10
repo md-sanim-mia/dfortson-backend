@@ -46,7 +46,7 @@ const auth = (...requiredRoles: UserRole[]) => {
       );
     }
 
-    req.user = verifiedUser;
+    req.user = verifiedUser as Express.User
 
     next();
   });

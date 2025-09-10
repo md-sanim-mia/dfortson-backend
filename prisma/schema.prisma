@@ -24,7 +24,8 @@ model User {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   Subscription      Subscription[]
-
+ uploads           Upload[]
+  morphVideos       MorphVideo[]
   @@map("users")
 }
 
@@ -65,6 +66,76 @@ model Subscription {
   @@map("subscriptions")
 }
 
+
+model Upload {
+  id          String   @id @default(uuid())
+  userId      String
+  imageUrl    String   // Path to stored image
+  fileSize    Int
+  mimetype    String
+  status      UploadStatus @default(PROCESSING)
+  consentGiven Boolean @default(false)
+  createdAt   DateTime @default(now())
+  
+  // Relationships
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches     Match[]
+  morphVideos MorphVideo[]
+  
+  @@map("uploads")
+}
+
+model Match {
+  id          String   @id @default(uuid())
+  uploadId    String
+  celebrityId String
+  similarity  Float    // 0-100 percentage
+  rank        Int      // Ranking position (1st, 2nd, 3rd, etc.)
+  metadata    Json?    // Additional match data
+   watermark   Boolean  @default(true)
+  // Relationships
+  upload      Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  celebrity   Celebrity @relation(fields: [celebrityId], references: [id])
+  morphVideos MorphVideo[]
+  
+  @@unique([uploadId, rank])
+  @@map("matches")
+}
+
+model Celebrity {
+  id          String   @id @default(uuid())
+  name        String
+  imageUrl    String
+  category    String?  // actor, singer, politician, etc.
+  popularity  Int?     // For ranking purposes
+  embeddings  Json?    // Facial embeddings data
+  isActive    Boolean  @default(true)
+  
+  // Relationships
+  matches     Match[]
+  
+  @@map("celebrities")
+}
+
+model MorphVideo {
+  id          String   @id @default(ulid())
+  userId      String
+  uploadId    String
+  matchId     String
+  videoUrl    String
+  duration    Int      // Duration in seconds
+  status      MorphStatus @default(GENERATING)
+  watermark   Boolean  @default(true)
+  resolution  String   @default("720p")
+  createdAt   DateTime @default(now())
+  
+  // Relationships
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  upload      Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  
+  @@map("morph_videos")
+}
 enum Interval {
   day 
   week
@@ -90,3 +161,14 @@ enum UserRole {
   ADMIN
   SUPER_ADMIN
 }
+enum UploadStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MorphStatus {
+  GENERATING
+  COMPLETED
+  FAILED
+  }

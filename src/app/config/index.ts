@@ -46,7 +46,12 @@ export default {
    googleAuth: {
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:5000/api/v1/auth/google/callback",
+    callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`,
+  },
+  facebookAuth: {
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: `${process.env.BACKEND_URL}/auth/facebook/callback`,
   },
 };
 

@@ -25,7 +25,7 @@ const getAllUser = catchAsync(async (req, res) => {
 });
 
 const updateUser = catchAsync(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req?.user?.id as string
 
   if (req.file) {
     req.body.profilePic = `${config.url.image}/uploads/${req.file.filename}`;
