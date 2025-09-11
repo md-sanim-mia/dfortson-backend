@@ -1,12 +1,24 @@
 import { UserRole } from "@prisma/client";
 import { UploadController } from "./uploads.contllors";
 import auth from "../../middlewares/auth";
-import express from 'express'
+import express, { NextFunction, Request, Response } from 'express'
+import { multerUpload } from "../../config/multer-config";
 const router = express.Router();
 
 router.post(
   "/",
   auth(UserRole.USER, UserRole.SUPER_ADMIN),
+  multerUpload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      req.body = JSON.parse(req.body.data);
+
+      console.log(req.body)
+      next();
+    } catch (err) {
+      next(err); // error middleware এ পাঠাবে
+    }
+  },
   UploadController.createUpload
 );
 

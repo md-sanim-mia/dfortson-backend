@@ -53,6 +53,10 @@ export default {
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: `${process.env.BACKEND_URL}/auth/facebook/callback`,
   },
+
+   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
+    cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
 };
 
 

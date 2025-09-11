@@ -6,7 +6,15 @@ import { UploadService } from "./upload.service";
 
 const createUpload = catchAsync(async (req, res) => {
     const {id}=req.user as JwtPayload
-  const result = await UploadService.createUploadIntoDB(req.body,id );
+
+      const file = req.file;
+ 
+  if (!file) {
+    throw new Error("Image file is required");
+  }
+  const upload = { ...req.body, imageUrl: file.path };
+
+  const result = await UploadService.createUploadIntoDB(upload,id );
   sendResponse(res, {
     statusCode: status.CREATED,
     message: 'Upload created successfully',
