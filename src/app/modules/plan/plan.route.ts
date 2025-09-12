@@ -10,13 +10,14 @@ const router = Router();
 router.post(
   "/create-plan",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-  validateRequest(planValidationSchema),
+  // validateRequest(planValidationSchema),
   PlanController.createPlan
 );
 
 router.get("/", PlanController.getAllPlans);
 
 router.get("/:planId", PlanController.getPlanById);
+router.patch("/:planId", PlanController.updatePlan);
 
 router.delete(
   "/:planId",

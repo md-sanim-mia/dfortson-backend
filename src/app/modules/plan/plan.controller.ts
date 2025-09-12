@@ -5,10 +5,20 @@ import sendResponse from "../../utils/sendResponse";
 
 // // Create Plan
 const createPlan = catchAsync(async (req, res) => {
+  // console.log("Request Body:", req.body); // Debugging line to check the request body
   const result = await PlanServices.createPlan(req.body);
   sendResponse(res, {
     statusCode: status.CREATED,
     message: "Plan created successfully!",
+    data: result,
+  });
+});
+const updatePlan = catchAsync(async (req, res) => {
+  // console.log("Request Body:", req.body); // Debugging line to check the request body
+  const result = await PlanServices.updatePlan(req.params.planId, req.body);
+  sendResponse(res, {
+    statusCode: status.CREATED,
+    message: "Plan updated successfully!",
     data: result,
   });
 });
@@ -48,4 +58,5 @@ export const PlanController = {
   getAllPlans,
   getPlanById,
   deletePlan,
+  updatePlan
 };

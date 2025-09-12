@@ -33,7 +33,7 @@ model Plan {
   id            String         @id @default(uuid())
   planName      String
   amount        Float
-  currency      String
+  currency      String?
   interval      Interval       @default(month)
   intervalCount Int
   freeTrialDays Int?
@@ -136,6 +136,18 @@ model MorphVideo {
   
   @@map("morph_videos")
 }
+
+model Blog {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  image       String
+  category    String
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum Interval {
   day 
   week

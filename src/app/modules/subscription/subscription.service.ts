@@ -11,6 +11,7 @@ import { Subscription } from "@prisma/client";
 import QueryBuilder from "../../builder/QueryBuilder";
 
 const createSubscription = async (userId: string, planId: string) => {
+  console.log("createSubscription - userId:", userId);
   return await prisma.$transaction(async (tx) => {
     // 1. Verify user exists
     const user = await tx.user.findUnique({
@@ -25,6 +26,7 @@ const createSubscription = async (userId: string, planId: string) => {
     const plan = await tx.plan.findUnique({
       where: { id: planId },
     });
+    console.log("createSubscription - plan:", plan);
     if (!plan) {
       throw new AppError(status.NOT_FOUND, "Plan not found");
     }

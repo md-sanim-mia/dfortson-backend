@@ -4,9 +4,9 @@ import sendResponse from "../../utils/sendResponse";
 import { SubscriptionServices } from "./subscription.service";
 
 const createSubscription = catchAsync(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req?.user?.id as string;
   const { planId } = req.body;
-
+  console.log("createSubscription - planId:", req.body);
   const result = await SubscriptionServices.createSubscription(userId, planId);
 
   sendResponse(res, {
@@ -38,7 +38,7 @@ const getSingleSubscription = catchAsync(async (req, res) => {
 });
 
 const getMySubscription = catchAsync(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req?.user?.id as string;
 
   const result = await SubscriptionServices.getMySubscription(userId);
 
