@@ -39,6 +39,24 @@ const updateUser = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const updateUserProfile = catchAsync(async (req, res) => {
+  const userId = req?.user?.id as string;
+  const file = req.file;
+ 
+  // if (!file) {
+  //   throw new Error("Image file is required");
+  // }
+
+  const upload = { ...req.body, profilePic: file?.path };
+  console.log(upload)
+  const result = await UserService.updateUserProfileIntoDB(userId, upload);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "User profile updated successfully!",
+    data: result,
+  });
+});
 
 const getSingleUserById = catchAsync(async (req, res) => {
   const { userId } = req.params;
@@ -69,4 +87,5 @@ export const UserController = {
   updateUser,
   deleteUser,
   getSingleUserById,
+  updateUserProfile
 };

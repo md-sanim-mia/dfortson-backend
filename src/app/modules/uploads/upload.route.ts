@@ -9,17 +9,33 @@ router.post(
   "/",
   auth(UserRole.USER, UserRole.SUPER_ADMIN),
   multerUpload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      req.body = JSON.parse(req.body.data);
+  // (req: Request, res: Response, next: NextFunction) => {
+  //   try {
+  //     req.body = JSON.parse(req.body.data);
 
-      console.log(req.body)
-      next();
-    } catch (err) {
-      next(err); // error middleware এ পাঠাবে
-    }
-  },
+  //     console.log(req.body)
+  //     next();
+  //   } catch (err) {
+  //     next(err); // error middleware এ পাঠাবে
+  //   }
+  // },
   UploadController.createUpload
+);
+router.post(
+  "/multiple-images",
+  auth(UserRole.ADMIN ,UserRole.SUPER_ADMIN),
+   multerUpload.fields([{ name: "images" }]),
+  // (req: Request, res: Response, next: NextFunction) => {
+  //   try {
+  //     req.body = JSON.parse(req.body.data);
+
+  //     console.log(req.body)
+  //     next();
+  //   } catch (err) {
+  //     next(err); // error middleware এ পাঠাবে
+  //   }
+  // },
+  UploadController.createUploadsIntoDB
 );
 
 router.get(
@@ -27,6 +43,13 @@ router.get(
   auth( UserRole.SUPER_ADMIN),
   UploadController.getAllUploads
 );
+router.delete(
+  "/delete-multiple/images",
+ 
+  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  UploadController.deleteMultipleFiles
+);
+
 router.get(
   "/my-uploads",
   auth( UserRole.SUPER_ADMIN,UserRole.USER),
@@ -42,6 +65,7 @@ router.get(
 router.patch(
   "/:id",
   auth(UserRole.USER, UserRole.SUPER_ADMIN),
+   multerUpload.single("file"),
   UploadController.updateUpload
 );
 
@@ -50,5 +74,6 @@ router.delete(
   auth(UserRole.USER, UserRole.SUPER_ADMIN),
   UploadController.deleteUpload
 );
+
 
 export const uploadRoute= router;

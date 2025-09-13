@@ -5,8 +5,15 @@ import status from "http-status";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { refreshToken } from "../auth/auth.service";
 
+export type uploadPayload={
+  imageUrl: string;
+  originalname: string;
+  filename: string;
+  fileSize: number;
+  mimetype: string; 
+}
 const createUploadIntoDB = async (
-  payload: Omit<Upload, "id" | "createdAt" | "user">,
+  payload: Omit<uploadPayload, "id" | "createdAt" | "user">,
   userId: string
 ): Promise<Upload> => {
   const userExists = await prisma.user.findUnique({ where: { id: userId } });
@@ -16,6 +23,7 @@ const createUploadIntoDB = async (
     data: { ...payload, userId },
   });
 
+  console.log(result)
   return result;
 };
 const getAllUploadsFromDB = async (  query: Record<string, unknown>) => {
@@ -101,9 +109,9 @@ const getSingleUploadFromDB = async (
 
 const updateUploadIntoDB = async (
   id: string,
-  payload: Partial<Upload>,
+  payload: Partial<uploadPayload>,
   user: any
-): Promise<Upload> => {
+): Promise<uploadPayload> => {
   let whereClause: any = { id };
 
   // If user is not admin, only allow updates to their own uploads
@@ -170,6 +178,35 @@ const deleteUploadFromDB = async (id: string, user: any) => {
   return result;
 };
 
+const createUploadsIntoDB = async (
+  payloads: Omit<uploadPayload, "id" | "createdAt" | "user">[],
+  userId: string
+): Promise<Upload[]> => {
+  const userExists = await prisma.user.findUnique({ where: { id: userId } });
+  if (!userExists) throw new AppError(status.NOT_FOUND, "User not found");
+
+  const results = await Promise.all(
+    payloads.map((item) =>
+      prisma.upload.create({
+        data: { ...item, userId },
+      })
+    )
+  );
+
+  console.log(results);
+  return results; // সব newly created uploads এর data array আকারে আসবে
+};
+
+const deleteMultipleFiles = async (ids: string[], user: any) => {
+  if (!ids || ids.length === 0) {
+    throw new AppError(status.BAD_REQUEST, "No IDs provided for deletion");
+  }
+  const results = await Promise.all(
+    ids.map((id) => deleteUploadFromDB(id, user))
+  );
+  return results;
+};  
+
 export const UploadService = {
   createUploadIntoDB,
   getAllUploadsFromDB,
@@ -177,4 +214,6 @@ export const UploadService = {
   updateUploadIntoDB,
   deleteUploadFromDB,
   getAllMyUploadsFromDB,
+  createUploadsIntoDB,
+  deleteMultipleFiles
 };

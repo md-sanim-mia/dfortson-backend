@@ -7,6 +7,7 @@ import { UserValidation } from "./user.validation";
 import { UserController } from "./user.controller";
 import validateRequest from "../../middlewares/validateRequest";
 import { NextFunction, Request, Response, Router } from "express";
+import { multerUpload } from "../../config/multer-config";
 
 const router = Router();
 
@@ -45,6 +46,25 @@ router.patch(
   auth(),
   validateRequest(UserValidation.updateUserValidationSchema),
   UserController.updateUser
+);
+
+router.patch(
+  "/update-profile",
+  auth(),
+  multerUpload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (req.body.data) {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch {
+      next(new ApiError(status.BAD_REQUEST, "Invalid JSON in 'data' field"));
+    }
+  },
+  auth(),
+  // validateRequest(UserValidation.updateUserProfileValidationSchema),
+  UserController.updateUserProfile
 );
 
 router.delete(

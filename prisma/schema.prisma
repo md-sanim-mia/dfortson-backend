@@ -26,6 +26,7 @@ model User {
   Subscription      Subscription[]
  uploads           Upload[]
   morphVideos       MorphVideo[]
+  Profile           Profile?
   @@map("users")
 }
 
@@ -73,6 +74,8 @@ model Upload {
   imageUrl    String   // Path to stored image
   fileSize    Int
   mimetype    String
+  originalname String
+  filename      String
   status      UploadStatus @default(PROCESSING)
   consentGiven Boolean @default(false)
   createdAt   DateTime @default(now())
@@ -144,6 +147,17 @@ model Blog {
   image       String
   category    String
   views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Profile {
+  id          String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  number String
+  gender String
+  birthDate DateTime
+  country String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

@@ -115,6 +115,58 @@ const updateUserIntoDB = async (userId: string, payload: Partial<User>) => {
   return updatedUser;
 };
 
+const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!isUserExist) {
+    throw new ApiError(status.NOT_FOUND, "User not found!");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      fullName: payload?.fullName,
+      profilePic: payload?.profilePic || "",
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      profilePic: true,
+      role: true,
+      isVerified: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  const profileData = {
+    userId: userId,
+    number: payload?.number || "",
+    gender: payload?.gender || "",
+    birthDate: payload?.birthDate || "",
+    country: payload?.country || "",
+  };
+  const isProfileExist = await prisma.profile.findUnique({
+    where: { userId: userId },
+  }); 
+
+  if (!isProfileExist) {
+    await prisma.profile.create({
+      data: profileData,
+    });
+  } else {
+    await prisma.profile.update({
+      where: { userId: userId },
+      data: profileData,
+    });
+  }
+
+  return updatedUser;
+};
+
 const getSingleUserByIdFromDB = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -151,4 +203,5 @@ export const UserService = {
   updateUserIntoDB,
   deleteUserFromDB,
   getSingleUserByIdFromDB,
+  updateUserProfileIntoDB,
 };
