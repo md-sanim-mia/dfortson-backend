@@ -23,7 +23,8 @@ app.use(passport.initialize());
 app.use("/api/v1", router);
 
 app.get("/", async (req: Request, res: Response) => {
-	res.render("index.ejs");
+	// 
+	res.send("API is running...");
 });
 
 
