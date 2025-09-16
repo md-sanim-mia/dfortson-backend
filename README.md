@@ -2,7 +2,7 @@
 
 A robust backend API for Neural Nexus team built with Node.js, Express.js, TypeScript, and PostgreSQL. This API provides comprehensive user management, subscription handling, and payment processing capabilities with Stripe integration.
 
-## 🚀 Features
+## 🚀 Features g
 
 - **Authentication & Authorization**: JWT-based authentication with role-based access control (USER, ADMIN, SUPER_ADMIN)
 - **User Management**: Complete user registration, email verification, profile management with image upload
