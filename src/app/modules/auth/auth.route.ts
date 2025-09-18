@@ -60,6 +60,10 @@ router.post(
 router.post("/reset-password", AuthController.resetPassword);
 
 router.post(
+  "/verify-reset-password-otp",
+  AuthController.verifyResetPasswordOTP
+);
+router.post(
   "/resend-verification-link",
   validateRequest(AuthValidation.resendConfirmationLinkValidationSchema),
   AuthController.resendVerificationLink

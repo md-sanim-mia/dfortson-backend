@@ -144,10 +144,9 @@ const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) =>
 
   const profileData = {
     userId: userId,
-    number: payload?.number || "",
-    gender: payload?.gender || "",
     birthDate: payload?.birthDate || "",
-    country: payload?.country || "",
+    course: payload?.course || "",
+    year: payload?.year || "",
   };
   const isProfileExist = await prisma.profile.findUnique({
     where: { userId: userId },

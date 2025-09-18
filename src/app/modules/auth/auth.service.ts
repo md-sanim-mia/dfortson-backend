@@ -7,7 +7,7 @@ import { sendEmail } from "../../utils/sendEmail";
 import { jwtHelpers } from "./../../helpers/jwtHelpers";
 import { passwordCompare } from "../../helpers/comparePasswords";
 import { hashPassword } from "../../helpers/hashPassword";
-
+import bcrypt from "bcrypt";
 const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -182,41 +182,97 @@ const forgotPassword = async (email: string) => {
     throw new ApiError(status.UNAUTHORIZED, "User account is not verified!");
   }
 
-  // Step 2: Save OTP in DB
+
+  // Generate 6-digit OTP
+  const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const otp = generateOTP();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+  // Save OTP in DBinit 
   await prisma.user.update({
     where: { email },
     data: {
       isResetPassword: true,
       canResetPassword: false,
+      resetPasswordOTP: otp,
+      resetPasswordOTPExpiresAt: otpExpiresAt,
     },
   });
 
-  const jwtPayload = {
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    profilePic: user.profilePic,
-    role: user.role,
-    isVerified: user.isVerified,
-  };
+  // Send OTP via email
+ const emailContent = `
+  <h2>Password Reset Request</h2>
+  <p>Hello ${user.fullName},</p>
+  <p>We received a request to reset your password. Please use the following OTP to proceed:</p>
 
-  const accessToken = jwtHelpers.createToken(
-    jwtPayload,
-    config.jwt.access.secret as string,
-    config.jwt.access.expiresIn as string
-  );
+  <div style="
+    background-color: #f5f5f5;
+    padding: 20px;
+    text-align: center;
+    margin: 20px auto;
+    max-width: 400px;
+    width: 100%;
+    border-radius: 8px;
+  ">
+    <h1 style="
+      color: #333;
+      font-size: 32px;
+      letter-spacing: 5px;
+      margin: 0;
+    ">
+      ${otp}
+    </h1>
+  </div>
 
-  const resetPassLink = `${config.verify.resetPassLink}?token=${accessToken}`;
+  <p>This OTP will expire in 10 minutes.</p>
+  <p>If you didn't request this password reset, please ignore this email.</p>
+  <p>Best regards,<br>Your App Team</p>
+`;
+  await sendEmail(user.email, "Password Reset OTP", emailContent);
 
-  await sendEmail(user.email, resetPassLink);
-
-  // Step 4: Return response
   return {
-    message:
-      "We have sent a Reset Password link to your email address. Please check your inbox.",
+    message: "We have sent a 6-digit OTP to your email address. Please check your inbox and use the OTP to reset your password.",
   };
 };
 
+const verifyResetPasswordOTP = async (email: string, otp: string) => {
+  const user = await prisma.user.findUnique({ 
+    where: { email } 
+  });
+
+  if (!user) {
+    throw new ApiError(status.NOT_FOUND, "User not found!");
+  }
+
+  if (!user.isResetPassword) {
+    throw new ApiError(status.BAD_REQUEST, "No password reset request found!");
+  }
+
+  if (!user.resetPasswordOTP || user.resetPasswordOTP !== otp) {
+    throw new ApiError(status.BAD_REQUEST, "Invalid OTP!");
+  }
+
+  if (!user.resetPasswordOTPExpiresAt || new Date() > user.resetPasswordOTPExpiresAt) {
+    throw new ApiError(status.BAD_REQUEST, "OTP has expired!");
+  }
+
+  // Mark that user can now reset password and clear OTP
+  await prisma.user.update({
+    where: { email },
+    data: {
+      canResetPassword: true,
+      resetPasswordOTP: null,
+      resetPasswordOTPExpiresAt: null,
+    },
+  });
+
+  return {
+    message: "OTP verified successfully. You can now reset your password.",
+  };
+};
 const resetPassword = async (
   email: string,
   newPassword: string,
@@ -293,42 +349,41 @@ const resendVerificationLink = async (email: string) => {
   };
 };
 
-const resendResetPassLink = async (email: string) => {
+const resendResetPassLink = async (email: string, newPassword: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
     throw new ApiError(status.NOT_FOUND, "User not found!");
   }
+ if (!user.canResetPassword) {
+    throw new ApiError(status.UNAUTHORIZED, "Please verify OTP first!");
+  } // Hash the new password
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-  const jwtPayload = {
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    profilePic: user.profilePic,
-    role: user.role,
-    isVerified: user.isVerified,
-  };
-
+  // Update password and clear reset flags
   await prisma.user.update({
-    where: { email: user.email },
+    where: { email },
     data: {
-      isResetPassword: true,
+      password: hashedPassword,
+      isResetPassword: false,
+      canResetPassword: false,
     },
   });
 
-  const accessToken = jwtHelpers.createToken(
-    jwtPayload,
-    config.jwt.access.secret as string,
-    config.jwt.access.expiresIn as string
-  );
+  // Send confirmation email
+  const confirmationEmailContent = `
+    <h2>Password Reset Successful</h2>
+    <p>Hello ${user.fullName},</p>
+    <p>Your password has been successfully reset for your account associated with ${email}.</p>
+    <p><strong>Reset Time:</strong> ${new Date().toLocaleString()}</p>
+    <p>If you did not make this change, please contact our support team immediately.</p>
+    <p>Best regards,<br>Your App Team</p>
+  `;
 
-  const resetPassLink = `${config.verify.resetPassLink}?token=${accessToken}`;
-
-  await sendEmail(user.email, resetPassLink);
+  await sendEmail(user.email, "Password Reset Confirmation", confirmationEmailContent);
 
   return {
-    message:
-      "New Reset Password link has been sent to your email. Please check your inbox.",
+    message: "Password has been reset successfully! A confirmation email has been sent.",
   };
 };
 
@@ -418,4 +473,5 @@ export const AuthService = {
   verifyResetPassLink,
   resendResetPassLink,
   resendVerificationLink,
+  verifyResetPasswordOTP
 };

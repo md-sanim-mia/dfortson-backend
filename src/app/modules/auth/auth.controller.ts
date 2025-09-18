@@ -96,9 +96,9 @@ const resendVerificationLink = catchAsync(async (req, res) => {
 });
 
 const resendResetPassLink = catchAsync(async (req, res) => {
-  const { email } = req.body;
+  const { email, newPassword } = req.body;
 
-  const result = await AuthService.resendResetPassLink(email);
+  const result = await AuthService.resendResetPassLink(email, newPassword);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -131,6 +131,14 @@ const refreshToken = catchAsync(async (req, res) => {
 });
 
 
+const verifyResetPasswordOTP = catchAsync(async (req, res) => {
+  const { email, otp } = req.body;
+  await AuthService.verifyResetPasswordOTP(email, otp);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "OTP verified successfully! You can now reset your password.",
+  });
+});
 
 export const AuthController = {
   login,
@@ -143,5 +151,6 @@ export const AuthController = {
   verifyResetPassLink,
   resendResetPassLink,
   resendVerificationLink,
+  verifyResetPasswordOTP
 
 };

@@ -19,6 +19,8 @@ model User {
   canResetPassword  Boolean        @default(false)
   isResentOtp       Boolean        @default(false)
   role              UserRole       @default(USER)
+  resetPasswordOTP          String?
+  resetPasswordOTPExpiresAt DateTime?
   isSubscribed      Boolean        @default(false)
   planExpiration    DateTime?
   createdAt         DateTime       @default(now())
@@ -83,10 +85,7 @@ model Profile {
   id          String   @id @default(uuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id])
-  number      String
-  gender      String
-  birthDate   DateTime
-  country     String
+  birthDate   DateTime?
   institution String? // university / college
   department  String? // faculty / department
   course      String
