@@ -53,7 +53,13 @@ export default {
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: `${process.env.BACKEND_URL}/auth/facebook/callback`,
   },
-
+ appleAuth: {
+    clientID: process.env.APPLE_CLIENT_ID || "", // Service ID
+    teamID: process.env.APPLE_TEAM_ID || "",
+    keyID: process.env.APPLE_KEY_ID || "",
+    privateKey: process.env.APPLE_PRIVATE_KEY || "",
+    callbackURL: process.env.APPLE_CALLBACK_URL || "/auth/apple/callback",
+  },
    cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
     cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,

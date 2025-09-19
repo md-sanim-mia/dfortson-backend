@@ -13,9 +13,6 @@ const calculateEndDate = (
   const endDate = new Date(startDate);
 
   switch (interval) {
-    case "day":
-      endDate.setDate(endDate.getDate() + intervalCount);
-      break;
     case "week":
       endDate.setDate(endDate.getDate() + 7 * intervalCount);
       break;
