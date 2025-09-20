@@ -162,6 +162,18 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 }
 
+model  DocumentPdf {
+  id          String   @id @default(uuid())
+  fileUrl     String   
+  originalname String
+  mimetype     String
+  size         Int
+  filename     String
+   createdAt DateTime         @default(now())
+  uploadedAt  DateTime @default(now())
+}
+
+
 enum NotificationType {
   SUBMISSION
   FEEDBACK

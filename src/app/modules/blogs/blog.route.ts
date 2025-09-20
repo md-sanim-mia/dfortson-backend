@@ -2,7 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 import { blogController } from "./blog.contllors";
-import { multerUpload } from "../../config/multer-config";
+import { imageUpload } from "../../config/multer-config";
 
 // import validateRequest from "../middlewares/validateRequest";
 // import { blogValidationSchema } from "./blog.validation";
@@ -14,7 +14,7 @@ router.post(
   "/create-blog",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   // validateRequest(blogValidationSchema),
-   multerUpload.single("file"),
+   imageUpload.single("file"),
   (req: Request, res: Response, next: NextFunction) => {
     try {
       req.body = JSON.parse(req.body.data);
@@ -47,7 +47,7 @@ router.patch(
   "/update-blog/:id",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   // validateRequest(blogValidationSchema),
-  multerUpload.single("file"),
+  imageUpload.single("file"),
   (req: Request, res: Response, next: NextFunction) => {
     try {
       req.body = JSON.parse(req.body.data);
