@@ -19,16 +19,16 @@ model User {
   canResetPassword          Boolean        @default(false)
   isResentOtp               Boolean        @default(false)
   role                      UserRole       @default(USER)
-  resetPasswordOTP          String?
-  resetPasswordOTPExpiresAt DateTime?
   isSubscribed              Boolean        @default(false)
   planExpiration            DateTime?
   createdAt                 DateTime       @default(now())
   updatedAt                 DateTime       @updatedAt
-  Subscription              Subscription[]
+  resetPasswordOTP          String?
+  resetPasswordOTPExpiresAt DateTime?
+  Notifications             Notification[]
   Profile                   Profile?
   Submissions               Submission[]
-  Notifications             Notification[]
+  Subscription              Subscription?
 
   @@map("users")
 }
@@ -46,9 +46,9 @@ model Plan {
   active        Boolean
   description   String?
   features      Json?
-  Subscription  Subscription[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  Subscription  Subscription[]
 
   @@map("plans")
 }
@@ -62,10 +62,10 @@ model Subscription {
   amount          Float
   stripePaymentId String        @unique
   paymentStatus   PaymentStatus @default(PENDING)
-  user            User?         @relation(fields: [userId], references: [id])
-  plan            Plan?         @relation(fields: [planId], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  plan            Plan          @relation(fields: [planId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
 
   @@map("subscriptions")
 }
@@ -84,69 +84,65 @@ model Blog {
 model Profile {
   id          String    @id @default(uuid())
   userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id])
   birthDate   DateTime?
-  institution String? // university / college
-  department  String? // faculty / department
-  course      String
-  year        String
-  batch       String? // e.g. 2022–2026
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  batch       String?
+  course      String
+  department  String?
+  institution String?
+  year        String
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 model Scenario {
-  id                 String         @id @default(uuid())
+  id                 String       @id @default(uuid())
   title              String
   description        String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  additionalDocument Json?
+  markingPointer     Json
   scenario           Json
   speech             Json
-  markingPointer     Json
-  additionalDocument Json?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-
-  submissions Submission[]
+  submissions        Submission[]
+  ReferenceAudio     ReferenceAudio?
 }
-
-
 
 model Submission {
   id             String           @id @default(uuid())
   userId         String
   scenarioId     String
-  audioFile      Json
   transcript     String?
   supportingDocs Json?
   score          Float?
   status         SubmissionStatus @default(SUBMITTED)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-
-  user          User           @relation(fields: [userId], references: [id])
-  scenario      Scenario       @relation(fields: [scenarioId], references: [id])
-  aiFeedback    AIFeedback?
-  humanFeedback HumanFeedback?
+  audioFile      Json
+  aiFeedback     AIFeedback?
+  humanFeedback  HumanFeedback?
+  scenario       Scenario         @relation(fields: [scenarioId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
 }
 
 model AIFeedback {
-  id                  String   @id @default(uuid())
-  submissionId        String   @unique
+  id                  String     @id @default(uuid())
+  submissionId        String     @unique
+  generatedAt         DateTime   @default(now())
   analysis            Json
-  persuasivenessScore Float
   overallScore        Float
+  persuasivenessScore Float
   suggestions         Json
-  generatedAt         DateTime @default(now())
-
-  submission Submission @relation(fields: [submissionId], references: [id])
+  submission          Submission @relation(fields: [submissionId], references: [id])
 }
 
 model HumanFeedback {
-  id           String   @id @default(uuid())
-  submissionId String   @unique
+  id           String     @id @default(uuid())
+  submissionId String     @unique
   comments     String
-  createdAt    DateTime @default(now())
-  submission Submission @relation(fields: [submissionId], references: [id])
+  createdAt    DateTime   @default(now())
+  submission   Submission @relation(fields: [submissionId], references: [id])
 }
 
 model Notification {
@@ -156,21 +152,29 @@ model Notification {
   message   String
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
 }
 
 model DocumentPdf {
   id           String   @id @default(uuid())
   fileUrl      String
-  originalname String
-  mimetype     String
-  size         Int
-  filename     String
   createdAt    DateTime @default(now())
   uploadedAt   DateTime @default(now())
+  filename     String
+  mimetype     String
+  originalname String
+  size         Int
 }
 
+model ReferenceAudio {
+  id              String      @id @default(uuid())
+  audioScenarioId  String   @unique            
+  audioData       Bytes
+  createdAt       DateTime  @default(now())
+  scenario Scenario? @relation(fields: [audioScenarioId],references: [id])
+
+  @@map("reference_audio")
+}
 
 enum NotificationType {
   SUBMISSION
@@ -191,6 +195,7 @@ enum ScenarioStatus {
 }
 
 enum Interval {
+  lifetime
   week
   month
   year

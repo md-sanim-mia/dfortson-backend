@@ -15,31 +15,30 @@ const createPlan = async (payload: Plan) => {
       active: true,
     });
 
-    // Step 2: Create Price in Stripe
-    // const recurringData: any = {
-    //   interval: payload.interval,
-    //   interval_count: payload.intervalCount,
-    // };
-      let recurringData: any = undefined;
-    if (payload.planName.toLowerCase() === "lifetime") {
-      recurringData = {
-        interval: "year",
-        interval_count: 1000, // Lifetime হিসেবে ধরবে
-      };
-    } else {
-      recurringData = {
-        interval: payload.interval,
-        interval_count: payload.intervalCount,
-      };
-    }
+    //Step 2: Create Price in Stripe
+   const isLifetimePlan = payload.planName.toLowerCase().includes("lifetime") || 
+                          payload.interval === "lifetime";
 
-    const price = await stripe.prices.create({
+    const priceConfig: any = {
       currency: "usd",
       unit_amount: Math.round(payload.amount * 100),
       active: true,
-      recurring: recurringData,
       product: product.id,
-    });
+    };
+
+    if (!isLifetimePlan) {
+      // Regular subscription - add recurring
+      priceConfig.recurring = {
+        interval: payload.interval,
+        interval_count: payload.intervalCount,
+      };
+      console.log("🔄 Creating SUBSCRIPTION plan");
+    } else {
+      // Lifetime - no recurring field (one-time payment)  
+      console.log("🔥 Creating LIFETIME plan (one-time payment)");
+    }
+
+    const price = await stripe.prices.create(priceConfig);
     // console.log("Stripe Product and Price created:", price);
 
     // Step 3: Create Plan Record in Database
