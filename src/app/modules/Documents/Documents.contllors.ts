@@ -54,7 +54,7 @@ const updateDocument=catchAsync(async(req,res)=>{
     mimetype: file?.mimetype,
     fileUrl: file?.path,      // Cloudinary URL
     size: file?.size,
-    filename: file?.filename,}
+    filename: file?.filename}
     const result = await DocumentService.updateDocument(id,uploadData);
     sendResponse(res, {
         statusCode: 200,

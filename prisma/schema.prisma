@@ -8,27 +8,27 @@ datasource db {
 }
 
 model User {
-  id                String         @id @default(uuid())
-  fullName          String
-  email             String         @unique
-  password          String
-  profilePic        String?        @default("")
-  passwordChangedAt DateTime?
-  isVerified        Boolean        @default(false)
-  isResetPassword   Boolean        @default(false)
-  canResetPassword  Boolean        @default(false)
-  isResentOtp       Boolean        @default(false)
-  role              UserRole       @default(USER)
+  id                        String         @id @default(uuid())
+  fullName                  String
+  email                     String         @unique
+  password                  String
+  profilePic                String?        @default("")
+  passwordChangedAt         DateTime?
+  isVerified                Boolean        @default(false)
+  isResetPassword           Boolean        @default(false)
+  canResetPassword          Boolean        @default(false)
+  isResentOtp               Boolean        @default(false)
+  role                      UserRole       @default(USER)
   resetPasswordOTP          String?
   resetPasswordOTPExpiresAt DateTime?
-  isSubscribed      Boolean        @default(false)
-  planExpiration    DateTime?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  Subscription      Subscription[]
-  Profile           Profile?
-  Submissions       Submission[]
-  Notifications     Notification[]
+  isSubscribed              Boolean        @default(false)
+  planExpiration            DateTime?
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  Subscription              Subscription[]
+  Profile                   Profile?
+  Submissions               Submission[]
+  Notifications             Notification[]
 
   @@map("users")
 }
@@ -82,31 +82,29 @@ model Blog {
 }
 
 model Profile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
   birthDate   DateTime?
   institution String? // university / college
   department  String? // faculty / department
   course      String
   year        String
   batch       String? // e.g. 2022–2026
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Scenario {
-  id                   String         @id @default(uuid())
-  title                String
-  description          String
-  scenarioDoc          String // PDF (3–5 pages)
-  clientPerspectiveDoc String // PDF (1–2 pages)
-  cohort               String?
-  releaseDate          DateTime?
-  status               ScenarioStatus @default(SCHEDULED)
-  createdBy            String
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  id                 String         @id @default(uuid())
+  title              String
+  description        String
+  scenario           Json
+  speech             Json
+  markingPointer     Json
+  additionalDocument Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   submissions Submission[]
 }
@@ -162,15 +160,15 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 }
 
-model  DocumentPdf {
-  id          String   @id @default(uuid())
-  fileUrl     String   
+model DocumentPdf {
+  id           String   @id @default(uuid())
+  fileUrl      String
   originalname String
   mimetype     String
   size         Int
   filename     String
-   createdAt DateTime         @default(now())
-  uploadedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  uploadedAt   DateTime @default(now())
 }
 
 
