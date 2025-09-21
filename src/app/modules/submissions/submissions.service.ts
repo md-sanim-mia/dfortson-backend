@@ -1,3 +1,5 @@
+import status from "http-status";
+import AppError from "../../errors/AppError";
 import prisma from "../../utils/prisma";
 
 const createSubmissions = async (
@@ -5,8 +7,9 @@ const createSubmissions = async (
   assessmentId: string,
   payload: any
 ) => {
+
   const result = await prisma.submission.create({
-    data: { userId, scenarioId: assessmentId, ...payload },
+    data: { userId, scenarioId: assessmentId, audioFile:payload },
   });
   return result;
 };
@@ -26,6 +29,20 @@ const getAllSubmissions = async () => {
 const getSingleSubmission = async (id: string) => {
   const result = await prisma.submission.findUnique({
     where: { id },
+    include: {
+      user: true,
+      scenario: true,
+    },
+  });
+  return result;
+};
+const getMySubmission = async (userId: string) => {
+
+  if(!userId){
+    throw new  AppError(status.BAD_REQUEST,"user id is not found !")
+  }
+  const result = await prisma.submission.findMany({
+    where: { userId},
     include: {
       user: true,
       scenario: true,
@@ -57,4 +74,5 @@ export const submissionsServices = {
   getSingleSubmission,
   updateSubmission,
   deleteSubmission,
+  getMySubmission
 };

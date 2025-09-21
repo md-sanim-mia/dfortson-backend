@@ -78,6 +78,51 @@ router.post(
 router.get("/me", auth(), AuthController.getMe);
 
 router.post("/refresh-token", AuthController.refreshToken);
+// Apple Sign In Routes
+router.get("/apple", (req, res, next) => {
+  // Check if Apple Sign In is configured
+  if (!process.env.APPLE_CLIENT_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Apple Sign In is not configured. Please add APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY to your environment variables." 
+    });
+  }
+
+  passport.authenticate("apple", {
+    scope: ['name', 'email']
+  })(req, res, next);
+});
+
+router.post("/apple/callback", (req, res, next) => {
+  // Check if Apple Sign In is configured
+  if (!process.env.APPLE_CLIENT_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/error?message=apple_not_configured`);
+  }
+
+  passport.authenticate("apple", { session: false }, (err:any, user:any, info:any) => {
+    if (err) {
+      console.error("Apple auth error:", err);
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/error?message=${encodeURIComponent(err.message || 'Apple authentication failed')}`);
+    }
+    
+    if (!user) {
+      console.error("Apple auth failed: No user returned");
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/error?message=authentication_failed`);
+    }
+
+    try {
+      const token = user.accessToken;
+      if (token) {
+        res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+      } else {
+        res.redirect(`${process.env.FRONTEND_URL}/auth/error?message=no_token`);
+      }
+    } catch (error) {
+      console.error("Apple callback processing error:", error);
+      res.redirect(`${process.env.FRONTEND_URL}/auth/error?message=callback_error`);
+    }
+  })(req, res, next);
+});
 
 
 

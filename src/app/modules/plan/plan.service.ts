@@ -8,6 +8,7 @@ const createPlan = async (payload: Plan) => {
   const result = await prisma.$transaction(async (tx) => {
     // Step 1: Create Product in Stripea
     console.log("Creating Stripe Product with payload:", payload);
+
     const product = await stripe.products.create({
       name: payload.planName,
       description: payload.description!,
@@ -15,10 +16,22 @@ const createPlan = async (payload: Plan) => {
     });
 
     // Step 2: Create Price in Stripe
-    const recurringData: any = {
-      interval: payload.interval,
-      interval_count: payload.intervalCount,
-    };
+    // const recurringData: any = {
+    //   interval: payload.interval,
+    //   interval_count: payload.intervalCount,
+    // };
+      let recurringData: any = undefined;
+    if (payload.planName.toLowerCase() === "lifetime") {
+      recurringData = {
+        interval: "year",
+        interval_count: 1000, // Lifetime হিসেবে ধরবে
+      };
+    } else {
+      recurringData = {
+        interval: payload.interval,
+        interval_count: payload.intervalCount,
+      };
+    }
 
     const price = await stripe.prices.create({
       currency: "usd",

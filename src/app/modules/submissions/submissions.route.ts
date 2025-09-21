@@ -28,11 +28,14 @@ const audioUpload = multer({
 
 // Single audio upload
 route.post(
-  "/upload-audio",
+  "/upload-audio/:assessmentId",
   auth(UserRole.SUPER_ADMIN, UserRole.USER),
   audioUpload.single('audioFile'), // Single file
   submissionsContllors.createSubmissions
 )
+route.get("/my-submissions",auth(UserRole.USER,UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getMyAllSubmissions)
+route.get("/",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getAllSubmissions)
+route.get("/:id",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getSingleSubmission)
 
 
 

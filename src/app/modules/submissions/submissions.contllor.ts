@@ -35,6 +35,17 @@ const getAllSubmissions = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyAllSubmissions = catchAsync(async (req, res) => {
+
+  const {id}=req.user as JwtPayload 
+  const result = await submissionsServices.getMySubmission(id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    message: "My submissions retrieved successfully",
+    data: result,
+  });
+});
 
 // Get Single Submission
 const getSingleSubmission = catchAsync(async (req, res) => {
@@ -88,6 +99,7 @@ export const submissionsContllors={
 createSubmissions,
 getAllSubmissions,
 getSingleSubmission,
-deleteSubmission
+deleteSubmission,
+getMyAllSubmissions
 }
 
