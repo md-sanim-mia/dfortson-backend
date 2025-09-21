@@ -145,9 +145,7 @@ model HumanFeedback {
   id           String   @id @default(uuid())
   submissionId String   @unique
   comments     String
-  scoreAdjust  Float?
   createdAt    DateTime @default(now())
-
   submission Submission @relation(fields: [submissionId], references: [id])
 }
 

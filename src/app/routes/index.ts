@@ -7,6 +7,7 @@ import { blogRouter } from "../modules/blogs/blog.route";
 import { DocumentRoutes } from "../modules/Documents/documents.route";
 import { ScenarioRoutes } from "../modules/assessments/scenario.route";
 import { submissionsRoute } from "../modules/submissions/submissions.route";
+import { humanFeedbackRoute } from "../modules/humanFeedBack/human.feed.back.route";
 
 const router = Router();
 
@@ -43,6 +44,10 @@ const moduleRoutes = [
   {
     path: "/submissions",
     route: submissionsRoute,
+  },
+  {
+    path: "/human-feedback",
+    route: humanFeedbackRoute,
   },
   
 ];

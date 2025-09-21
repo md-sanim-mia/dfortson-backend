@@ -31,7 +31,14 @@ const getSingleSubmission = async (id: string) => {
     where: { id },
     include: {
       user: true,
+      scenario: {select:{  id: true,
+      description: true,
+      title: true,
       scenario: true,
+      markingPointer: true,
+      additionalDocument: true,
+      createdAt: true,
+      updatedAt: true,}},
     },
   });
   return result;
@@ -45,7 +52,14 @@ const getMySubmission = async (userId: string) => {
     where: { userId},
     include: {
       user: true,
+      scenario: {select:{  id: true,
+      description: true,
+      title: true,
       scenario: true,
+      markingPointer: true,
+      additionalDocument: true,
+      createdAt: true,
+      updatedAt: true,}},
     },
   });
   return result;
