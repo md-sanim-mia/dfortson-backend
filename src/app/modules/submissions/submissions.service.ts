@@ -20,6 +20,7 @@ const getAllSubmissions = async () => {
     include: {
       user: true, // related user info যদি লাগে
       scenario: true, // related assessment info যদি লাগে
+      humanFeedback :true
     },
   });
   return result;
@@ -39,6 +40,7 @@ const getSingleSubmission = async (id: string) => {
       additionalDocument: true,
       createdAt: true,
       updatedAt: true,}},
+        humanFeedback:true,
     },
   });
   return result;
@@ -60,6 +62,7 @@ const getMySubmission = async (userId: string) => {
       additionalDocument: true,
       createdAt: true,
       updatedAt: true,}},
+      humanFeedback:true,
     },
   });
   return result;
