@@ -169,7 +169,9 @@ model DocumentPdf {
 model ReferenceAudio {
   id              String      @id @default(uuid())
   audioScenarioId  String   @unique            
-  audioData       Bytes
+  audioUrl      String
+  fileFormate    String
+    size         Int
   createdAt       DateTime  @default(now())
   scenario Scenario? @relation(fields: [audioScenarioId],references: [id])
 
