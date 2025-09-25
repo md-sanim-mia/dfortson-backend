@@ -8,6 +8,7 @@ import { DocumentRoutes } from "../modules/Documents/documents.route";
 import { ScenarioRoutes } from "../modules/assessments/scenario.route";
 import { submissionsRoute } from "../modules/submissions/submissions.route";
 import { humanFeedbackRoute } from "../modules/humanFeedBack/human.feed.back.route";
+import { contactRoute } from "../modules/contact/contact.route";
 
 const router = Router();
 
@@ -48,6 +49,10 @@ const moduleRoutes = [
   {
     path: "/human-feedback",
     route: humanFeedbackRoute,
+  },
+  {
+    path: "/contacts",
+    route: contactRoute,
   },
   
 ];

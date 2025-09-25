@@ -96,11 +96,11 @@ model Profile {
 }
 
 model Scenario {
-  id                 String       @id @default(uuid())
+  id                 String          @id @default(uuid())
   title              String
   description        String
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
   additionalDocument Json?
   markingPointer     Json
   scenario           Json
@@ -110,20 +110,21 @@ model Scenario {
 }
 
 model Submission {
-  id             String           @id @default(uuid())
-  userId         String
-  scenarioId     String
-  transcript     String?
-  supportingDocs Json?
-  score          Float?
-  status         SubmissionStatus @default(SUBMITTED)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  audioFile      Json
-  aiFeedback     AIFeedback?
-  humanFeedback  HumanFeedback?
-  scenario       Scenario         @relation(fields: [scenarioId], references: [id])
-  user           User             @relation(fields: [userId], references: [id])
+  id         String @id @default(uuid())
+  userId     String
+  scenarioId String
+  totalScore Int  @default(0)
+  positive   String @default("")
+  negative  String  @default("")
+  improvement String  @default("")
+  status    SubmissionStatus @default(COMPLETED)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  aiFeedback    AIFeedback?
+  humanFeedback HumanFeedback?
+  scenario      Scenario       @relation(fields: [scenarioId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
 }
 
 model AIFeedback {
@@ -167,13 +168,13 @@ model DocumentPdf {
 }
 
 model ReferenceAudio {
-  id              String      @id @default(uuid())
-  audioScenarioId  String   @unique            
-  audioUrl      String
-  fileFormate    String
-    size         Int
+  id              String    @id @default(uuid())
+  audioScenarioId String    @unique
+  audioUrl        String
+  fileFormate     String
+  size            Int
   createdAt       DateTime  @default(now())
-  scenario Scenario? @relation(fields: [audioScenarioId],references: [id])
+  scenario        Scenario? @relation(fields: [audioScenarioId], references: [id])
 
   @@map("reference_audio")
 }
@@ -188,6 +189,7 @@ enum NotificationType {
 enum SubmissionStatus {
   SUBMITTED
   EVALUATED
+  COMPLETED
 }
 
 enum ScenarioStatus {

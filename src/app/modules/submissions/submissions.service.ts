@@ -2,17 +2,17 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import prisma from "../../utils/prisma";
 
-const createSubmissions = async (
-  userId: string,
-  assessmentId: string,
-  payload: any
-) => {
+// const createSubmissions = async (
+//   userId: string,
+//   assessmentId: string,
+//   payload: any
+// ) => {
 
-  const result = await prisma.submission.create({
-    data: { userId, scenarioId: assessmentId, audioFile:payload },
-  });
-  return result;
-};
+//   const result = await prisma.submission.create({
+//     data: { userId, scenarioId: assessmentId, audioFile:payload },
+//   });
+//   return result;
+// };
 
 // Get All Submissions
 const getAllSubmissions = async () => {
@@ -86,7 +86,7 @@ const deleteSubmission = async (id: string) => {
 };
 
 export const submissionsServices = {
-  createSubmissions,
+ 
   getAllSubmissions,
   getSingleSubmission,
   updateSubmission,

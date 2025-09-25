@@ -1,19 +1,30 @@
 import status from "http-status";
 import AppError from "../../errors/AppError";
 import prisma from "../../utils/prisma";
+import axios from "axios";
+import config from "../../config";
 
 // Create a new Scenario
 const createScenario = async (payload: any) => {
   if (!payload) {
     throw new AppError(status.BAD_REQUEST, "payload data  is messing  ");
   }
+
   const result = await prisma.scenario.create({ data: { ...payload } });
+  console.log(result)
+  const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario/${result.id}`;
+  const response = await axios.post(apiUrl,{
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const aiData = response.data || {};
+  console.log(aiData)
   return result;
 };
 
 // Get all Scenarios
 const getAllScenarios = async () => {
-  const result = await prisma.scenario.findMany();
+  const result = (await prisma.scenario.findMany({include:{ReferenceAudio:true}}))
   return result;
 };
 const getAllScenariosForStudent = async () => {
@@ -25,6 +36,7 @@ const getAllScenariosForStudent = async () => {
       scenario: true,
       markingPointer: true,
       additionalDocument: true,
+speech:false,
       createdAt: true,
       updatedAt: true,
     },

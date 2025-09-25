@@ -3,28 +3,28 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { submissionsServices } from "./submissions.service";
 
-const createSubmissions=catchAsync(async(req,res)=>{
-    const {id}=req.user as JwtPayload
-    const {assessmentId}=req.params
- if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "Audio file is required"
-      })
-    }
+// const createSubmissions=catchAsync(async(req,res)=>{
+//     const {id}=req.user as JwtPayload
+//     const {assessmentId}=req.params
+//  if (!req.file) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Audio file is required"
+//       })
+//     }
     
-    const audioFile = req.file // Single file object
-    const audioPath = audioFile.path
+//     const audioFile = req.file // Single file object
+//     const audioPath = audioFile.path
     
-    console.log('Audio uploaded:', audioPath)
+//     console.log('Audio uploaded:', audioPath)
     
-    const result= await submissionsServices.createSubmissions(id,assessmentId,audioFile)
-  sendResponse(res, {
-    statusCode: 200,
-    message: "assessment deleted successfully",
-    data: result,
-  });
-})
+//     const result= await submissionsServices.createSubmissions(id,assessmentId,audioFile)
+//   sendResponse(res, {
+//     statusCode: 200,
+//     message: "assessment deleted successfully",
+//     data: result,
+//   });
+// })
 // Get All Submissions
 const getAllSubmissions = catchAsync(async (req, res) => {
   const result = await submissionsServices.getAllSubmissions();
@@ -96,7 +96,7 @@ const deleteSubmission = catchAsync(async (req, res) => {
 
 
 export const submissionsContllors={
-createSubmissions,
+
 getAllSubmissions,
 getSingleSubmission,
 deleteSubmission,

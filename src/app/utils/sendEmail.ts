@@ -68,3 +68,41 @@ export const sendEmail = async (
     html: html,
   });
 };
+
+export const sendContactEmail = async (to: string, payload: { fullName: string; email: string; subject: string; description: string }) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: config.sendEmail.brevo_email,
+      pass: config.sendEmail.brevo_pass,
+    },
+  });
+
+  const html = `
+  <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #f7f9fc; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background-color: #007bff; padding: 20px; color: #fff; text-align: center;">
+      <h2 style="margin: 0;">New Contact Form Submission</h2>
+    </div>
+    <div style="padding: 20px; color: #333; line-height: 1.5;">
+      <p><strong>Full Name:</strong> ${payload.fullName}</p>
+      <p><strong>Email:</strong> ${payload.email}</p>
+      <p><strong>Subject:</strong> ${payload.subject}</p>
+      <p><strong>Message:</strong><br/>${payload.description.replace(/\n/g, "<br/>")}</p>
+    </div>
+    <div style="background-color: #f1f3f6; padding: 15px; text-align: center; color: #555; font-size: 12px;">
+      &copy; ${new Date().getFullYear()} Super Job. All rights reserved.
+    </div>
+  </div>
+  `;
+
+  await transporter.sendMail({
+    from: ` ${payload.fullName} <${config.sendEmail.email_from}>`,
+    to:"hasansanim562@gmail.com",
+    subject: `New Contact: ${payload.subject}`,
+    text: `Full Name: ${payload.fullName}\nEmail: ${payload.email}\nSubject: ${payload.subject}\nMessage: ${payload.description}`,
+    html,
+  });
+};
+
