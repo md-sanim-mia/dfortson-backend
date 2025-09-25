@@ -155,6 +155,26 @@ const otpGenerate=catchAsync(async(req,res)=>{
   message: "We have sent a 6-digit verification code to your email address. Please check your inbox and use the code to complete verification.",
   })
 })
+const otpVerify=catchAsync(async(req,res)=>{
+
+    const {otpCode,data} = req.body;
+
+
+  if (!data.email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+  if (!data.password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
+
+  const result=await AuthService.verifyOTP(otpCode,data)
+
+  sendResponse(res,{
+  statusCode:status.OK,
+  message: "Email verification completed successfully! Your account is now verified.",
+  data:result
+  })
+})
 
 export const AuthController = {
   login,
@@ -167,6 +187,7 @@ export const AuthController = {
   verifyResetPassLink,
   resendResetPassLink,
   resendVerificationLink,
-  verifyResetPasswordOTP
-
+  verifyResetPasswordOTP,
+otpGenerate,
+otpVerify
 };

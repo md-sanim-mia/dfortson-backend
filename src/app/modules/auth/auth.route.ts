@@ -10,6 +10,13 @@ import passport from "../../config/passport"
 const router = Router();
 
 // Google login redirect
+
+router.post('/register-user',AuthController.otpGenerate
+)
+
+router.post('/verify-otp',AuthController.otpVerify
+)
+
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 // Callback

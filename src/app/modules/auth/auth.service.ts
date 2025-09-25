@@ -8,7 +8,7 @@ import { jwtHelpers } from "./../../helpers/jwtHelpers";
 import { passwordCompare } from "../../helpers/comparePasswords";
 import { hashPassword } from "../../helpers/hashPassword";
 import bcrypt from "bcrypt";
-import { User } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -425,7 +425,7 @@ const verifyOTP = async (otpCode: string,payload:User) => {
   }
 
   // Check if OTP is expired
-  if (new Date() > otpRecord.expiresAt) {
+  if (new Date() > otpRecord?.expiresAt) {
     // Delete expired OTP
     await prisma.otpModel.delete({ 
       where: { id: otpRecord.id } 
@@ -446,12 +446,29 @@ const verifyOTP = async (otpCode: string,payload:User) => {
       isVerified: true 
     }
   });
+  const hashedPassword = await hashPassword(payload.password);
 
-if(result){
+  const userData = {
+    ...payload,
+    password: hashedPassword,
+    isVerified: true,
+  };
 
-  await prisma.user.create({data:payload})
-}
-  
+  const jwtPayload = {
+    fullName: payload.fullName,
+    email: payload.email,
+    role: UserRole.USER,
+    profilePic: payload?.profilePic || "",
+    isVerified: true,
+  };
+
+  const accessToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.access.secret as string,
+    config.jwt.resetPassword.expiresIn as string
+  );
+
+  await prisma.user.create({ data: userData });
   // Send success confirmation email
   const successEmailContent = `
     <!DOCTYPE html>
@@ -562,18 +579,11 @@ if(result){
   `;
 
   // Send success confirmation email (async, don't wait)
-  sendEmail(normalizedEmail, "✅ Email Verified Successfully - Welcome!", successEmailContent)
+ const results= sendEmail(normalizedEmail, "✅ Email Verified Successfully - Welcome!", successEmailContent)
     .catch(error => console.error('Failed to send success email:', error));
 
-  return {
-    success: true,
-    message: "Email verification completed successfully! Your account is now verified.",
-    data: {
-      email: normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2'),
-      verifiedAt: new Date().toISOString(),
-      status: "verified"
-    }
-  };
+    return {accessToken}
+  
 };
 
 // Resend OTP Function
