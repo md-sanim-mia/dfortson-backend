@@ -137,6 +137,15 @@ model AIFeedback {
   suggestions         Json
   submission          Submission @relation(fields: [submissionId], references: [id])
 }
+model OtpModel {
+  id          String   @id @default(uuid())
+  email       String
+  code        String
+  isVerified Boolean @default(false)
+  generatedAt DateTime @default(now())
+  expiresAt   DateTime?
+}
+
 
 model HumanFeedback {
   id           String     @id @default(uuid())

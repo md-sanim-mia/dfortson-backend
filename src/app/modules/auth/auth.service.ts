@@ -8,6 +8,7 @@ import { jwtHelpers } from "./../../helpers/jwtHelpers";
 import { passwordCompare } from "../../helpers/comparePasswords";
 import { hashPassword } from "../../helpers/hashPassword";
 import bcrypt from "bcrypt";
+import { User } from "@prisma/client";
 const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -182,7 +183,6 @@ const forgotPassword = async (email: string) => {
     throw new ApiError(status.UNAUTHORIZED, "User account is not verified!");
   }
 
-
   // Generate 6-digit OTP
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -191,7 +191,7 @@ const forgotPassword = async (email: string) => {
   const otp = generateOTP();
   const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-  // Save OTP in DBinit 
+  // Save OTP in DBinit
   await prisma.user.update({
     where: { email },
     data: {
@@ -203,7 +203,7 @@ const forgotPassword = async (email: string) => {
   });
 
   // Send OTP via email
- const emailContent = `
+  const emailContent = `
   <h2>Password Reset Request</h2>
   <p>Hello ${user.fullName},</p>
   <p>We received a request to reset your password. Please use the following OTP to proceed:</p>
@@ -234,13 +234,378 @@ const forgotPassword = async (email: string) => {
   await sendEmail(user.email, "Password Reset OTP", emailContent);
 
   return {
-    message: "We have sent a 6-digit OTP to your email address. Please check your inbox and use the OTP to reset your password.",
+    message:
+      "We have sent a 6-digit OTP to your email address. Please check your inbox and use the OTP to reset your password.",
   };
 };
 
+const otpGenerate = async (email: string) => {
+    const isUserExistByEmail = await prisma.user.findUnique({
+    where: { email: email },
+  });
+
+  if (isUserExistByEmail) {
+    throw new ApiError(
+      status.BAD_REQUEST,
+      `User with this email: ${email} already exists!`
+    );
+  }
+
+  // Generate 6-digit OTP
+  const generateOTP = (): string => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  // Clear any existing unverified OTPs for this email
+  await prisma.otpModel.deleteMany({
+    where: {
+      email: email.toLowerCase().trim(),
+      isVerified: false
+    }
+  });
+
+  const otp = generateOTP();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+  // Save OTP in database
+  await prisma.otpModel.create({
+    data: {
+      email: email.toLowerCase().trim(),
+      code: otp,
+      expiresAt: otpExpiresAt,
+      isVerified: false,
+    },
+  });
+
+  // Professional email template
+  const emailContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Email Verification</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+              
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 300;">
+                    Email Verification
+                  </h1>
+                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+                    Secure your account with OTP verification
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                    Hello there,
+                  </p>
+                  
+                  <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                    We received a request to verify your email address. Please use the following verification code to proceed:
+                  </p>
+
+                  <!-- OTP Box -->
+                  <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border: 2px solid #667eea; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                    <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
+                      Verification Code
+                    </p>
+                    <h1 style="color: #667eea; font-size: 36px; font-weight: bold; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">
+                      ${otp}
+                    </h1>
+                  </div>
+
+                  <!-- Important Info -->
+                  <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                    <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.5;">
+                      <strong>⚠️ Important:</strong> This verification code will expire in <strong>10 minutes</strong>. 
+                      Please complete your verification before it expires.
+                    </p>
+                  </div>
+
+                  <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 20px 0;">
+                    If you didn't request this verification code, please ignore this email and ensure your account is secure.
+                  </p>
+
+                  <!-- Security Tips -->
+                  <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0;">
+                    <h3 style="color: #333333; font-size: 16px; margin: 0 0 10px 0;">
+                      🔒 Security Tips:
+                    </h3>
+                    <ul style="color: #666666; font-size: 14px; margin: 0; padding-left: 20px;">
+                      <li style="margin: 5px 0;">Never share your verification code with anyone</li>
+                      <li style="margin: 5px 0;">We will never ask for your code via phone or email</li>
+                      <li style="margin: 5px 0;">Always verify the sender's email address</li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                  <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">
+                    Need help? Contact our support team
+                  </p>
+                  <p style="color: #6c757d; font-size: 14px; margin: 0;">
+                    Best regards,<br>
+                    <strong style="color: #667eea;">Your App Team</strong>
+                  </p>
+                  
+                  <div style="margin-top: 20px;">
+                    <p style="color: #adb5bd; font-size: 12px; margin: 0;">
+                      This email was sent to ${email.toLowerCase().trim()}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+ const  result= await sendEmail(email, "🔐 Email Verification Code - Action Required", emailContent);
+
+  
+   return result
+};
+
+const verifyOTP = async (otpCode: string,payload:User) => {
+    const isUserExistByEmail = await prisma.user.findUnique({
+    where: { email: payload.email },
+  });
+
+  if (isUserExistByEmail) {
+    throw new ApiError(
+      status.BAD_REQUEST,
+      `User with this email: ${payload.email} already exists!`
+    );
+  }
+
+  // Validate input
+  if (!payload.email || !otpCode) {
+    throw new ApiError(status.BAD_REQUEST, "Email and OTP are required!");
+  }
+
+  if (otpCode.length !== 6) {
+    throw new ApiError(status.BAD_REQUEST, "OTP must be 6 digits!");
+  }
+  if (!payload) {
+    throw new ApiError(status.BAD_REQUEST, "payload is required !");
+  }
+
+  const normalizedEmail = payload.email.toLowerCase().trim();
+
+  // Find the most recent unverified OTP for this email
+  const otpRecord = await prisma.otpModel.findFirst({
+    where: {
+      email: normalizedEmail,
+      isVerified: false
+    },
+    orderBy: {
+      generatedAt: 'desc'
+    }
+  });
+
+  if (!otpRecord) {
+    throw new ApiError(status.NOT_FOUND, "OTP not found or already used. Please request a new OTP.");
+  }
+
+  // Check if OTP is expired
+  if (new Date() > otpRecord.expiresAt) {
+    // Delete expired OTP
+    await prisma.otpModel.delete({ 
+      where: { id: otpRecord.id } 
+    });
+    
+    throw new ApiError(status.UNAUTHORIZED, "OTP has expired. Please request a new verification code.");
+  }
+
+  // Verify OTP code
+  if (otpRecord.code !== otpCode.trim()) {
+    throw new ApiError(status.UNAUTHORIZED, "Invalid OTP. Please check the code and try again.");
+  }
+
+  // Mark OTP as verified
+ const result= await prisma.otpModel.update({
+    where: { id: otpRecord.id },
+    data: { 
+      isVerified: true 
+    }
+  });
+
+if(result){
+
+  await prisma.user.create({data:payload})
+}
+  
+  // Send success confirmation email
+  const successEmailContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Email Verified Successfully</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+              
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 40px 30px; text-align: center;">
+                  <div style="background-color: rgba(255,255,255,0.2); border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 40px;">✅</span>
+                  </div>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 300;">
+                    Email Verified Successfully!
+                  </h1>
+                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+                    Your email verification is now complete
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="color: #28a745; font-size: 24px; margin: 0 0 10px 0;">
+                      🎉 Congratulations!
+                    </h2>
+                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0;">
+                      Your email address has been successfully verified.
+                    </p>
+                  </div>
+
+                  <!-- Verification Details -->
+                  <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
+                    <p style="color: #495057; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
+                      Verified Email Address
+                    </p>
+                    <p style="color: #28a745; font-size: 18px; font-weight: bold; margin: 0; word-break: break-all;">
+                      ${normalizedEmail}
+                    </p>
+                    <p style="color: #6c757d; font-size: 12px; margin: 15px 0 0 0;">
+                      Verified on ${new Date().toLocaleString()}
+                    </p>
+                  </div>
+
+                  <!-- Success Message -->
+                  <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                    <p style="color: #155724; font-size: 16px; margin: 0; line-height: 1.5; text-align: center;">
+                      <strong>✨ Great!</strong> You can now access all features of your account. 
+                      Your email verification is complete and secure.
+                    </p>
+                  </div>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0;">
+                      Thank you for verifying your email address. Your account is now fully activated and ready to use.
+                    </p>
+                  </div>
+
+                  <!-- Next Steps -->
+                  <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 30px 0;">
+                    <h3 style="color: #333333; font-size: 16px; margin: 0 0 15px 0;">
+                      🚀 What's Next?
+                    </h3>
+                    <ul style="color: #666666; font-size: 14px; margin: 0; padding-left: 20px;">
+                      <li style="margin: 8px 0;">Complete your profile setup</li>
+                      <li style="margin: 8px 0;">Explore all available features</li>
+                      <li style="margin: 8px 0;">Secure your account with two-factor authentication</li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                  <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">
+                    Need assistance? Our support team is here to help
+                  </p>
+                  <p style="color: #6c757d; font-size: 14px; margin: 0;">
+                    Welcome to the team!<br>
+                    <strong style="color: #28a745;">Your App Team</strong>
+                  </p>
+                  
+                  <div style="margin-top: 20px;">
+                    <p style="color: #adb5bd; font-size: 12px; margin: 0;">
+                      This confirmation was sent to ${normalizedEmail}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  // Send success confirmation email (async, don't wait)
+  sendEmail(normalizedEmail, "✅ Email Verified Successfully - Welcome!", successEmailContent)
+    .catch(error => console.error('Failed to send success email:', error));
+
+  return {
+    success: true,
+    message: "Email verification completed successfully! Your account is now verified.",
+    data: {
+      email: normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2'),
+      verifiedAt: new Date().toISOString(),
+      status: "verified"
+    }
+  };
+};
+
+// Resend OTP Function
+// const resendOTP = async (email: string) => {
+//   const normalizedEmail = email.toLowerCase().trim();
+
+//   // Check if there's a recent OTP request (rate limiting - 2 minutes)
+//   const recentOtp = await prisma.otpModel.findFirst({
+//     where: {
+//       email: normalizedEmail,
+//       generatedAt: {
+//         gte: new Date(Date.now() - 2 * 60 * 1000) // 2 minutes ago
+//       }
+//     }
+//   });
+
+//   if (recentOtp) {
+//     const timeLeft = Math.ceil((recentOtp.generatedAt.getTime() + 2 * 60 * 1000 - Date.now()) / 1000);
+//     throw new ApiError(
+//       status.TOO_MANY_REQUESTS, 
+//       `Please wait ${timeLeft} seconds before requesting a new OTP.`
+//     );
+//   }
+
+//   // Use the original otpVerify function to generate and send new OTP
+//   return await otpVerify(normalizedEmail);
+// };
+
+
 const verifyResetPasswordOTP = async (email: string, otp: string) => {
-  const user = await prisma.user.findUnique({ 
-    where: { email } 
+  const user = await prisma.user.findUnique({
+    where: { email },
   });
 
   if (!user) {
@@ -255,7 +620,10 @@ const verifyResetPasswordOTP = async (email: string, otp: string) => {
     throw new ApiError(status.BAD_REQUEST, "Invalid OTP!");
   }
 
-  if (!user.resetPasswordOTPExpiresAt || new Date() > user.resetPasswordOTPExpiresAt) {
+  if (
+    !user.resetPasswordOTPExpiresAt ||
+    new Date() > user.resetPasswordOTPExpiresAt
+  ) {
     throw new ApiError(status.BAD_REQUEST, "OTP has expired!");
   }
 
@@ -273,6 +641,7 @@ const verifyResetPasswordOTP = async (email: string, otp: string) => {
     message: "OTP verified successfully. You can now reset your password.",
   };
 };
+
 const resetPassword = async (
   email: string,
   newPassword: string,
@@ -355,7 +724,7 @@ const resendResetPassLink = async (email: string, newPassword: string) => {
   if (!user) {
     throw new ApiError(status.NOT_FOUND, "User not found!");
   }
- if (!user.canResetPassword) {
+  if (!user.canResetPassword) {
     throw new ApiError(status.UNAUTHORIZED, "Please verify OTP first!");
   } // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 12);
@@ -380,10 +749,15 @@ const resendResetPassLink = async (email: string, newPassword: string) => {
     <p>Best regards,<br>Your App Team</p>
   `;
 
-  await sendEmail(user.email, "Password Reset Confirmation", confirmationEmailContent);
+  await sendEmail(
+    user.email,
+    "Password Reset Confirmation",
+    confirmationEmailContent
+  );
 
   return {
-    message: "Password has been reset successfully! A confirmation email has been sent.",
+    message:
+      "Password has been reset successfully! A confirmation email has been sent.",
   };
 };
 
@@ -412,7 +786,7 @@ export const refreshToken = async (token: string) => {
   ) as RefreshPayload;
 
   const { email, iat } = decoded;
-  console.log(email)
+  console.log(email);
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -461,7 +835,6 @@ export const refreshToken = async (token: string) => {
   return { accessToken };
 };
 
-
 export const AuthService = {
   getMe,
   loginUser,
@@ -473,5 +846,7 @@ export const AuthService = {
   verifyResetPassLink,
   resendResetPassLink,
   resendVerificationLink,
-  verifyResetPasswordOTP
+  verifyResetPasswordOTP,
+otpGenerate,
+verifyOTP
 };
