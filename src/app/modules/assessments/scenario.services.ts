@@ -12,13 +12,13 @@ const createScenario = async (payload: any) => {
 
   const result = await prisma.scenario.create({ data: { ...payload } });
   console.log(result)
-  const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario/${result.id}`;
-  const response = await axios.post(apiUrl,{
-    headers: { "Content-Type": "application/json" },
-  });
+  // const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario/${result.id}`;
+  // const response = await axios.post(apiUrl,{
+  //   headers: { "Content-Type": "application/json" },
+  // });
 
-  const aiData = response.data || {};
-  console.log(aiData)
+  // const aiData = response.data || {};
+  // console.log(aiData)
   return result;
 };
 
