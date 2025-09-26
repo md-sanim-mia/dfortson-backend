@@ -85,11 +85,12 @@ const googleLogin = async (idToken: string) => {
     const googleUserData: GoogleUserData = {
       userId: payload['sub'] || '',
       email: payload['email'] || '',
-      name: payload['name'] || '',
+      name:payload['name'] ||payload['email']?.split('@')[0] || 'Unknown User',
       picture: payload['picture'] || '',
       emailVerified: payload['email_verified'] || false
     };
 
+    console.log(googleUserData)
     // Database এ user আছে কিনা check করুন
     let existingUser = await prisma.user.findFirst({
       where: {
