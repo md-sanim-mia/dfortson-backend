@@ -176,6 +176,40 @@ const otpVerify=catchAsync(async(req,res)=>{
   })
 })
 
+// Google Login Controller
+const googleLogin = catchAsync(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({ message: "Google ID token is required" });
+  }
+
+  const result = await AuthService.googleLogin(idToken);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Google login successful!",
+    data: result,
+  });
+});
+
+// Apple Login Controller
+const appleLogin = catchAsync(async (req, res) => {
+  const { identityToken } = req.body;
+
+  if (!identityToken) {
+    return res.status(400).json({ message: "Apple identity token is required" });
+  }
+
+  const result = await AuthService.appleLogin(identityToken);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Apple login successful!",
+    data: result,
+  });
+});
+
 export const AuthController = {
   login,
   getMe,
@@ -189,5 +223,7 @@ export const AuthController = {
   resendVerificationLink,
   verifyResetPasswordOTP,
 otpGenerate,
-otpVerify
+otpVerify,
+googleLogin,
+appleLogin
 };

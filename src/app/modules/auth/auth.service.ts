@@ -9,6 +9,10 @@ import { passwordCompare } from "../../helpers/comparePasswords";
 import { hashPassword } from "../../helpers/hashPassword";
 import bcrypt from "bcrypt";
 import { User, UserRole } from "@prisma/client";
+import jwt,{Algorithm} from'jsonwebtoken'
+import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library'
+const client = new OAuth2Client( process.env.CLIENT_ID);
 const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -31,26 +35,12 @@ const loginUser = async (email: string, password: string) => {
     profilePic: user.profilePic,
     role: user.role,
     isVerified: user.isVerified,
+     isSubscribed:user.isSubscribed
   };
 
   // Check if user is not active
-  if (!user.isVerified) {
-    const accessToken = jwtHelpers.createToken(
-      jwtPayload,
-      config.jwt.access.secret as string,
-      config.jwt.resetPassword.expiresIn as string
-    );
 
-    const confirmedLink = `${config.verify.email}?token=${accessToken}`;
-
-    await sendEmail(user.email, undefined, confirmedLink);
-
-    throw new ApiError(
-      status.UNAUTHORIZED,
-      "User is not verified! We have sent a confirmation email to your email address. Please check your inbox."
-    );
-  }
-
+   
   const accessToken = jwtHelpers.createToken(
     jwtPayload,
     config.jwt.access.secret as string,
@@ -68,6 +58,369 @@ const loginUser = async (email: string, password: string) => {
     refreshToken,
   };
 };
+
+interface GoogleUserData {
+  userId: string;
+  email: string;
+  name: string;
+  picture: string;
+  emailVerified: boolean;
+}
+
+
+const googleLogin = async (idToken: string) => {
+   // Token verify করুন
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience:process.env.CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    
+    if (!payload) {
+      throw new Error('Invalid token payload');
+    }
+    
+    // Google থেকে User data পাবেন
+    const googleUserData: GoogleUserData = {
+      userId: payload['sub'] || '',
+      email: payload['email'] || '',
+      name: payload['name'] || '',
+      picture: payload['picture'] || '',
+      emailVerified: payload['email_verified'] || false
+    };
+
+    // Database এ user আছে কিনা check করুন
+    let existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: googleUserData.email },
+        ]
+      }
+    });
+
+    if (existingUser) {
+      // User আছে - login করুন এবং data update করুন
+      
+  const jwtPayload = {
+    fullName: existingUser.fullName,
+    email: existingUser.email,
+    role: existingUser.role,
+    profilePic: existingUser?.profilePic || "",
+    isVerified:existingUser.isVerified,
+    isSubscribed:existingUser.isSubscribed
+    
+  };
+
+  const accessToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.access.secret as string,
+    config.jwt.resetPassword.expiresIn as string
+  );
+      
+      return {
+        accessToken
+      };
+    } else {
+      // User নেই - নতুন user create করুন
+      const newUser = await prisma.user.create({
+        data: {
+          email: googleUserData.email,
+          fullName: googleUserData.name,
+          profilePic: googleUserData.picture,
+          password:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        
+        }
+      });
+      
+     
+  const jwtPayload = {
+    fullName: newUser.fullName,
+    email: newUser.email,
+    role: newUser.role,
+    profilePic: newUser?.profilePic || "",
+    isVerified:newUser.isVerified,
+    isSubscribed:newUser.isSubscribed
+    
+  };
+
+  const accessToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.access.secret as string,
+    config.jwt.resetPassword.expiresIn as string
+  );
+      
+      return {
+       accessToken
+      };
+    }
+    
+};
+
+
+//----------------------------------------------apple login  start -------------------------------------------------------------------
+interface AppleUserData {
+  userId: string;
+  email: string;
+  name?: string;
+  emailVerified: boolean;
+}
+
+interface AppleTokenPayload {
+  sub: string;
+  email?: string;
+  email_verified?: string | boolean;
+  aud: string;
+  iss: string;
+  exp: number;
+  iat: number;
+  [key: string]: any; // Additional properties
+}
+
+// Apple's public keys cache
+let applePublicKeys: any = null;
+let keysCacheExpiry = 0;
+
+// Fetch Apple's public keys
+const getApplePublicKeys = async () => {
+  const now = Date.now();
+  
+  if (applePublicKeys && now < keysCacheExpiry) {
+    return applePublicKeys;
+  }
+  
+  try {
+    const response = await fetch('https://appleid.apple.com/auth/keys');
+    const keys = await response.json();
+    
+    applePublicKeys = keys;
+    keysCacheExpiry = now + (24 * 60 * 60 * 1000); // Cache for 24 hours
+    
+    return keys;
+  } catch (error) {
+    throw new Error('Failed to fetch Apple public keys');
+  }
+};
+
+// Verify Apple ID token
+const verifyAppleToken = async (identityToken: string): Promise<AppleTokenPayload> => {
+  try {
+    // Decode token header to get key ID
+    const decodedHeader = jwt.decode(identityToken, { complete: true });
+    if (!decodedHeader || typeof decodedHeader === 'string') {
+      throw new Error('Invalid token format');
+    }
+    
+    const kid = decodedHeader.header.kid;
+    const alg = decodedHeader.header.alg;
+    
+    // Get Apple's public keys
+    const appleKeys = await getApplePublicKeys();
+    const key = appleKeys.keys.find((k: any) => k.kid === kid);
+    
+    if (!key) {
+      throw new Error('Apple public key not found');
+    }
+    
+    // Construct the public key
+    const publicKey = crypto.createPublicKey({
+      key: {
+        kty: key.kty,
+        n: key.n,
+        e: key.e,
+      },
+      format: 'jwk'
+    });
+    
+    // Verify the token
+    const payload = jwt.verify(identityToken, publicKey, {
+      algorithms: [alg as Algorithm],
+      audience: process.env.APPLE_CLIENT_ID,
+      issuer: 'https://appleid.apple.com'
+    });
+    
+    return payload as AppleTokenPayload;
+    
+  } catch (error) {
+    throw new Error('Apple token verification failed');
+  }
+};
+
+const appleLogin = async (identityToken: string) => {
+  try {
+    // Token verify করুন
+    const payload = await verifyAppleToken(identityToken);
+    
+    if (!payload) {
+      throw new Error('Invalid token payload');
+    }
+    
+    // Apple থেকে User data পাবেন
+    const appleUserData: AppleUserData = {
+      userId: payload.sub || '',
+      email: payload.email || '',
+      name: payload.email?.split('@')[0] || 'Apple User', // Email থেকে name বানাবো
+      emailVerified: payload.email_verified === 'true' || payload.email_verified === true
+    };
+
+    // Database এ user আছে কিনা check করুন
+    let existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: appleUserData.email },
+        ]
+      }
+    });
+
+    if (existingUser) {
+      // User আছে - login করুন
+      
+      const jwtPayload = {
+        fullName: existingUser.fullName,
+        email: existingUser.email,
+        role: existingUser.role,
+        profilePic: existingUser?.profilePic || "",
+        isVerified: existingUser.isVerified,
+        isSubscribed: existingUser.isSubscribed
+      };
+
+      const accessToken = jwtHelpers.createToken(
+        jwtPayload,
+        config.jwt.access.secret as string,
+        config.jwt.access.expiresIn as string
+      );
+      
+      return {
+        accessToken
+      };
+      
+    } else {
+      // User নেই - নতুন user create করুন
+      const newUser = await prisma.user.create({
+        data: {
+          email: appleUserData.email,
+          fullName: appleUserData?.name || "Not found",
+          profilePic: "", // Apple doesn't provide profile picture
+          password: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          isVerified: true
+        }
+      });
+      
+      const jwtPayload = {
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+        profilePic: newUser?.profilePic || "",
+        isVerified: newUser.isVerified,
+        isSubscribed: newUser.isSubscribed
+      };
+
+      const accessToken = jwtHelpers.createToken(
+        jwtPayload,
+        config.jwt.access.secret as string,
+        config.jwt.access.expiresIn as string
+      );
+      
+      return {
+        accessToken
+      };
+    }
+    
+  } catch (error) {
+    console.error('Apple login failed:', error);
+    throw new Error('Apple authentication failed');
+  }
+};
+
+//----------------------------------------------apple login end  -------------------------------------------------------------------
+// const appleLogin = async (idToken: string, user?: { firstName?: string, lastName?: string }) => {
+//   try {
+//     // Token verify করুন
+//     const payload = await verifyAppleToken(idToken);
+    
+//     if (!payload) {
+//       throw new Error('Invalid token payload');
+//     }
+    
+//     // Apple থেকে User data পাবেন
+//     const appleUserData: AppleUserData = {
+//       userId: payload.sub || '',
+//       email: payload.email || '',
+//       name: user?.firstName && user?.lastName 
+//         ? `${user.firstName} ${user.lastName}` 
+//         : payload.email?.split('@')[0] || 'Apple User',
+//       emailVerified: payload.email_verified === 'true' || payload.email_verified === true
+//     };
+
+//     // Database এ user আছে কিনা check করুন
+//     let existingUser = await prisma.user.findFirst({
+//       where: {
+//         OR: [
+//           { email: appleUserData.email },
+//         ]
+//       }
+//     });
+
+//     if (existingUser) {
+//       // User আছে - login করুন
+      
+//       const jwtPayload = {
+//         fullName: existingUser.fullName,
+//         email: existingUser.email,
+//         role: existingUser.role,
+//         profilePic: existingUser?.profilePic || "",
+//         isVerified: existingUser.isVerified,
+//         isSubscribed: existingUser.isSubscribed
+//       };
+
+//       const accessToken = jwtHelpers.createToken(
+//         jwtPayload,
+//         config.jwt.access.secret as string,
+//         config.jwt.access.expiresIn as string
+//       );
+      
+//       return {
+//         accessToken
+//       };
+      
+//     } else {
+//       // User নেই - নতুন user create করুন
+//       const newUser = await prisma.user.create({
+//         data: {
+//           email: appleUserData.email,
+//           fullName: appleUserData?.name || "Not found",
+//           profilePic: "", // Apple doesn't provide profile picture
+//           password: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+//           isVerified: appleUserData.emailVerified
+//         }
+//       });
+      
+//       const jwtPayload = {
+//         fullName: newUser.fullName,
+//         email: newUser.email,
+//         role: newUser.role,
+//         profilePic: newUser?.profilePic || "",
+//         isVerified: newUser.isVerified,
+//         isSubscribed: newUser.isSubscribed
+//       };
+
+//       const accessToken = jwtHelpers.createToken(
+//         jwtPayload,
+//         config.jwt.access.secret as string,
+//         config.jwt.access.expiresIn as string
+//       );
+      
+//       return {
+//         accessToken
+//       };
+//     }
+    
+//   } catch (error) {
+//     console.error('Apple login failed:', error);
+//     throw new Error('Apple authentication failed');
+//   }
+// };
+
 
 const verifyEmail = async (token: string) => {
   const verifiedToken = jwtHelpers.verifyToken(
@@ -454,12 +807,17 @@ const verifyOTP = async (otpCode: string,payload:User) => {
     isVerified: true,
   };
 
+
+ const user= await prisma.user.create({ data: userData });
+  
   const jwtPayload = {
-    fullName: payload.fullName,
-    email: payload.email,
-    role: UserRole.USER,
-    profilePic: payload?.profilePic || "",
-    isVerified: true,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    profilePic: user?.profilePic || "",
+    isVerified: user.isVerified,
+    isSubscribed:user.isSubscribed
+    
   };
 
   const accessToken = jwtHelpers.createToken(
@@ -467,8 +825,6 @@ const verifyOTP = async (otpCode: string,payload:User) => {
     config.jwt.access.secret as string,
     config.jwt.resetPassword.expiresIn as string
   );
-
-  await prisma.user.create({ data: userData });
   // Send success confirmation email
   const successEmailContent = `
     <!DOCTYPE html>
@@ -858,5 +1214,7 @@ export const AuthService = {
   resendVerificationLink,
   verifyResetPasswordOTP,
 otpGenerate,
-verifyOTP
+verifyOTP,
+googleLogin,
+appleLogin
 };

@@ -132,5 +132,8 @@ router.post("/apple/callback", (req, res, next) => {
 });
 
 
+router.post('/google-login', AuthController.googleLogin);
+router.post('/apple-login', AuthController.appleLogin);
+
 
 export const AuthRoutes = router;
