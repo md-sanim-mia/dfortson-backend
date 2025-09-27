@@ -63,7 +63,7 @@ export default {
    cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
     cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
-    ai_base_url:process.env.AI_URL
+    ai_base_url:process.env.AI_BASE_URL
 };
 
 
