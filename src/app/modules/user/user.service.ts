@@ -139,12 +139,14 @@ const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) =>
       isVerified: true,
       createdAt: true,
       updatedAt: true,
+      Profile:true
+    
     },
+  
   });
 
   const profileData = {
     userId: userId,
-    birthDate: payload?.birthDate || "",
     course: payload?.course || "",
     year: payload?.year || "",
   };

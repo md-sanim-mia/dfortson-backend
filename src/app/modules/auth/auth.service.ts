@@ -1140,6 +1140,8 @@ const getMe = async (email: string) => {
       isVerified: true,
       isSubscribed: true,
       planExpiration: true,
+      Profile:true,
+      Subscription:true
     },
   });
 
