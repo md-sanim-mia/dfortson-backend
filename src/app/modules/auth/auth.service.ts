@@ -826,6 +826,12 @@ const verifyOTP = async (otpCode: string,payload:User) => {
     config.jwt.access.secret as string,
     config.jwt.resetPassword.expiresIn as string
   );
+const refreshToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.refresh.secret as string,
+    config.jwt.refresh.expiresIn as string
+  );
+
   // Send success confirmation email
   const successEmailContent = `
     <!DOCTYPE html>
@@ -939,7 +945,7 @@ const verifyOTP = async (otpCode: string,payload:User) => {
  const results= sendEmail(normalizedEmail, "✅ Email Verified Successfully - Welcome!", successEmailContent)
     .catch(error => console.error('Failed to send success email:', error));
 
-    return {accessToken}
+    return {accessToken,refreshToken}
   
 };
 
