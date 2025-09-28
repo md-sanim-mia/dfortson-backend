@@ -75,7 +75,7 @@ const updateScenario = async (
     data,
   });
 const scenario_id=result.id
-   const apiUrl = `http://206.162.244.131:8003/speech/generate-from-scenario?scenario_id=${scenario_id}`;
+   const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario?scenario_id=${scenario_id}`;
   const response = await axios.post(apiUrl,{
     headers: { "Content-Type": "application/json" },
   });
