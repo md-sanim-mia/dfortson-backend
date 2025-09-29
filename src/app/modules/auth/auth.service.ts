@@ -1039,6 +1039,9 @@ const resetPassword = async (
     );
   }
 
+
+  
+
   const hashedPassword = await hashPassword(newPassword);
 
   await prisma.user.update({
