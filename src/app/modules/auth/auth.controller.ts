@@ -121,7 +121,7 @@ const getMe = catchAsync(async (req, res) => {
 const refreshToken = catchAsync(async (req, res) => {
   const { refreshToken } = req.cookies;
 
-  const result = await AuthService.refreshToken(refreshToken);
+  const result = await AuthService.refreshToken(req.body.refreshToken);
 
   sendResponse(res, {
     statusCode: status.OK,
