@@ -11,14 +11,16 @@ const createScenario = async (payload: any) => {
   }
 
   const result = await prisma.scenario.create({ data: { ...payload } });
-  console.log(result)
-  const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario/${result.id}`;
+const scenario_id=result.id
+console.log(scenario_id)
+  const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario?scenario_id=${scenario_id}`;
   const response = await axios.post(apiUrl,{
     headers: { "Content-Type": "application/json" },
   });
 
   const aiData = response.data || {};
   console.log(aiData)
+console.log(result.id)
   return result;
 };
 
@@ -72,11 +74,12 @@ const updateScenario = async (
     where: { id },
     data,
   });
-
-  const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario/${result.id}`;
+const scenario_id=result.id
+   const apiUrl = `${config.ai_base_url}/speech/generate-from-scenario?scenario_id=${scenario_id}`;
   const response = await axios.post(apiUrl,{
     headers: { "Content-Type": "application/json" },
   });
+
   return result;
 };
 
