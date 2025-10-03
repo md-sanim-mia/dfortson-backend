@@ -34,7 +34,7 @@ router.post(
 
 // Get all Scenarios
 router.get("/", auth(UserRole.ADMIN,UserRole.SUPER_ADMIN),ScenarioController.getAllScenarios);
-router.get("/for-student", auth(UserRole.ADMIN,UserRole.SUPER_ADMIN),ScenarioController.getAllScenarios);
+router.get("/for-student", auth(UserRole.ADMIN,UserRole.SUPER_ADMIN,UserRole.USER),ScenarioController.getAllScenarios);
 
 // Get single Scenario
 router.get("/:id",auth(UserRole.ADMIN,UserRole.SUPER_ADMIN,UserRole.USER), ScenarioController.getSingleScenario);
