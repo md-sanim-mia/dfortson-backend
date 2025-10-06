@@ -34,8 +34,10 @@ const audioUpload = multer({
 //   submissionsContllors.createSubmissions
 // )
 route.get("/my-submissions",auth(UserRole.USER,UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getMyAllSubmissions)
+route.get("/single-studentt-submissions/:id",auth(UserRole.USER,UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getSingleStundentSubmissions)
 route.get("/",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getAllSubmissions)
-route.get("/:id",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN),submissionsContllors.getSingleSubmission)
+route.get("/:id",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN,UserRole.USER),submissionsContllors.getSingleSubmission)
+route.post("/download/:id",auth(UserRole.SUPER_ADMIN,UserRole.ADMIN,UserRole.USER),submissionsContllors.downloadSingleSubmission)
 
 
 

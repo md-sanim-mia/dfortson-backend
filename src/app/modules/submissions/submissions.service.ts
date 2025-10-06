@@ -45,6 +45,7 @@ const getSingleSubmission = async (id: string) => {
   });
   return result;
 };
+
 const getMySubmission = async (userId: string) => {
 
   if(!userId){
@@ -53,7 +54,34 @@ const getMySubmission = async (userId: string) => {
   const result = await prisma.submission.findMany({
     where: { userId},
     include: {
-      user: true,
+      user: {select:{
+        fullName:true,email:true,id:true
+      }},
+      scenario: {select:{  id: true,
+      description: true,
+      title: true,
+      scenario: true,
+      markingPointer: true,
+      additionalDocument: true,
+      createdAt: true,
+      updatedAt: true,}},
+      humanFeedback:true,
+    },
+  });
+  return result;
+};
+
+const getSingleStudentSubmission = async (userId: string) => {
+
+  if(!userId){
+    throw new  AppError(status.BAD_REQUEST,"user id is not found !")
+  }
+  const result = await prisma.submission.findMany({
+    where: { userId},
+    include: {
+      user:{select:{
+        fullName:true,email:true,id:true
+      }},
       scenario: {select:{  id: true,
       description: true,
       title: true,
@@ -91,5 +119,6 @@ export const submissionsServices = {
   getSingleSubmission,
   updateSubmission,
   deleteSubmission,
-  getMySubmission
+  getMySubmission,
+  getSingleStudentSubmission 
 };

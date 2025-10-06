@@ -55,15 +55,7 @@ const createUserIntoDB = async (payload: User) => {
 };
 
 const getAllUserFromDB = async (query: Record<string, unknown>) => {
-  const userQuery = new QueryBuilder(prisma.user, query)
-    .search(["fullName", "email"])
-    .select(["id", "email", "fullName", "profilePic", "role", "isSubscribed"])
-    .paginate()
-
-  const [result, meta] = await Promise.all([
-    userQuery.execute(),
-    userQuery.countTotal(),
-  ]);
+const result=await prisma.user.findMany({include:{Profile:true}})
 
   if (!result.length) {
     throw new ApiError(status.NOT_FOUND, "No users found!");
@@ -76,7 +68,6 @@ const getAllUserFromDB = async (query: Record<string, unknown>) => {
   });
 
   return {
-    meta,
     data,
   };
 };
@@ -171,7 +162,10 @@ const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) =>
 const getSingleUserByIdFromDB = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-  });
+    include:{
+      Profile:true
+    }
+  })
 
   if (!user) {
     throw new ApiError(status.NOT_FOUND, "User not found!");
