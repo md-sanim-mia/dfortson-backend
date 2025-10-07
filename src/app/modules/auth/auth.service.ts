@@ -111,8 +111,13 @@ const googleLogin = async (idToken: string) => {
       config.jwt.access.secret as string,
       config.jwt.resetPassword.expiresIn as string
     );
+    const refreshToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.refresh.secret as string,
+    config.jwt.refresh.expiresIn as string
+  );
 
-    return { accessToken };
+    return { accessToken ,refreshToken};
   } else {
     // User নেই - নতুন user create করুন
     const newUser = await prisma.user.create({
@@ -138,8 +143,13 @@ const googleLogin = async (idToken: string) => {
       config.jwt.access.secret as string,
       config.jwt.resetPassword.expiresIn as string
     );
+      const refreshToken = jwtHelpers.createToken(
+    jwtPayload,
+    config.jwt.refresh.secret as string,
+    config.jwt.refresh.expiresIn as string
+  );
 
-    return { accessToken };
+    return { accessToken ,refreshToken};
   }
 };
 
