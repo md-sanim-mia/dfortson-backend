@@ -52,7 +52,9 @@ const getSingleScenario = async (id: string) => {
 
   const result = await prisma.scenario.findUnique({
     where: { id },
-  });
+
+    include:{ReferenceAudio:true}
+  })
   return result;
 };
 
