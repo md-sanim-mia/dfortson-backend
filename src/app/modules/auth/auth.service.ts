@@ -68,94 +68,79 @@ interface GoogleUserData {
 }
 
 
+
 const googleLogin = async (idToken: string) => {
-   // Token verify করুন
-    const ticket = await client.verifyIdToken({
-      idToken: idToken,
-      audience:process.env.CLIENT_ID,
-    });
-    
-    const payload = ticket.getPayload();
-    
-    if (!payload) {
-      throw new Error('Invalid token payload');
+  // Google থেকে পাওয়া token শুধু decode করা হবে, verify করা হবে না
+  const payload: any = jwt.decode(idToken);
+
+  if (!payload) {
+    throw new Error('Invalid token payload');
+  }
+
+  // Google থেকে User data পাবেন
+  const googleUserData: GoogleUserData = {
+    userId: payload['sub'] || '',
+    email: payload['email'] || '',
+    name: payload['name'] || payload['email']?.split('@')[0] || 'Unknown User',
+    picture: payload['picture'] || '',
+    emailVerified: payload['email_verified'] || false
+  };
+
+  console.log(googleUserData);
+
+  // Database এ user আছে কিনা check করুন
+  let existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: googleUserData.email }]
     }
-    
-    // Google থেকে User data পাবেন
-    const googleUserData: GoogleUserData = {
-      userId: payload['sub'] || '',
-      email: payload['email'] || '',
-      name:payload['name'] ||payload['email']?.split('@')[0] || 'Unknown User',
-      picture: payload['picture'] || '',
-      emailVerified: payload['email_verified'] || false
+  });
+
+  if (existingUser) {
+    // User আছে - login করুন এবং data update করুন
+    const jwtPayload = {
+      fullName: existingUser.fullName,
+      email: existingUser.email,
+      role: existingUser.role,
+      profilePic: existingUser?.profilePic || "",
+      isVerified: existingUser.isVerified,
+      isSubscribed: existingUser.isSubscribed
     };
 
-    console.log(googleUserData)
-    // Database এ user আছে কিনা check করুন
-    let existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: googleUserData.email },
-        ]
+    const accessToken = jwtHelpers.createToken(
+      jwtPayload,
+      config.jwt.access.secret as string,
+      config.jwt.resetPassword.expiresIn as string
+    );
+
+    return { accessToken };
+  } else {
+    // User নেই - নতুন user create করুন
+    const newUser = await prisma.user.create({
+      data: {
+        email: googleUserData.email,
+        fullName: googleUserData.name,
+        profilePic: googleUserData.picture,
+        password: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
       }
     });
 
-    if (existingUser) {
-      // User আছে - login করুন এবং data update করুন
-      
-  const jwtPayload = {
-    fullName: existingUser.fullName,
-    email: existingUser.email,
-    role: existingUser.role,
-    profilePic: existingUser?.profilePic || "",
-    isVerified:existingUser.isVerified,
-    isSubscribed:existingUser.isSubscribed
-    
-  };
+    const jwtPayload = {
+      fullName: newUser.fullName,
+      email: newUser.email,
+      role: newUser.role,
+      profilePic: newUser?.profilePic || "",
+      isVerified: newUser.isVerified,
+      isSubscribed: newUser.isSubscribed
+    };
 
-  const accessToken = jwtHelpers.createToken(
-    jwtPayload,
-    config.jwt.access.secret as string,
-    config.jwt.resetPassword.expiresIn as string
-  );
-      
-      return {
-        accessToken
-      };
-    } else {
-      // User নেই - নতুন user create করুন
-      const newUser = await prisma.user.create({
-        data: {
-          email: googleUserData.email,
-          fullName: googleUserData.name,
-          profilePic: googleUserData.picture,
-          password:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        
-        }
-      });
-      
-     
-  const jwtPayload = {
-    fullName: newUser.fullName,
-    email: newUser.email,
-    role: newUser.role,
-    profilePic: newUser?.profilePic || "",
-    isVerified:newUser.isVerified,
-    isSubscribed:newUser.isSubscribed
-    
-  };
+    const accessToken = jwtHelpers.createToken(
+      jwtPayload,
+      config.jwt.access.secret as string,
+      config.jwt.resetPassword.expiresIn as string
+    );
 
-  const accessToken = jwtHelpers.createToken(
-    jwtPayload,
-    config.jwt.access.secret as string,
-    config.jwt.resetPassword.expiresIn as string
-  );
-      
-      return {
-       accessToken
-      };
-    }
-    
+    return { accessToken };
+  }
 };
 
 
