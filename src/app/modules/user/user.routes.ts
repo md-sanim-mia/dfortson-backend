@@ -19,7 +19,7 @@ router.get(
 
 router.get(
   "/:userId",
-  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN,UserRole.USER),
   UserController.getSingleUserById
 );
 
