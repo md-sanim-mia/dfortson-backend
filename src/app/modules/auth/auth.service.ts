@@ -110,7 +110,7 @@ const googleLogin = async (idToken: string) => {
     const accessToken = jwtHelpers.createToken(
       jwtPayload,
       config.jwt.access.secret as string,
-      config.jwt.resetPassword.expiresIn as string
+      config.jwt.access.expiresIn as string
     );
     const refreshToken = jwtHelpers.createToken(
     jwtPayload,
@@ -143,7 +143,7 @@ const googleLogin = async (idToken: string) => {
     const accessToken = jwtHelpers.createToken(
       jwtPayload,
       config.jwt.access.secret as string,
-      config.jwt.resetPassword.expiresIn as string
+      config.jwt.access.expiresIn as string
     );
       const refreshToken = jwtHelpers.createToken(
     jwtPayload,
@@ -821,7 +821,7 @@ const verifyOTP = async (otpCode: string,payload:User) => {
   const accessToken = jwtHelpers.createToken(
     jwtPayload,
     config.jwt.access.secret as string,
-    config.jwt.resetPassword.expiresIn as string
+    config.jwt.access.expiresIn as string
   );
 const refreshToken = jwtHelpers.createToken(
     jwtPayload,
