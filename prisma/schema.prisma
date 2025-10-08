@@ -27,7 +27,6 @@ model User {
   resetPasswordOTPExpiresAt DateTime?
   Notifications             Notification[]
   Profile                   Profile?
-  Submissions               Submission[]
   Subscription              Subscription?
 
   @@map("users")
@@ -95,48 +94,6 @@ model Profile {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Scenario {
-  id                 String          @id @default(uuid())
-  title              String
-  description        String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  additionalDocument Json?
-  markingPointer     Json
-  scenario           Json
-  speech             Json
-  submissions        Submission[]
-  ReferenceAudio     ReferenceAudio?
-}
-
-model Submission {
-  id         String @id @default(uuid())
-  userId     String
-  scenarioId String
-  totalScore Int  @default(0)
-  positive   String @default("")
-  negative   String @default("")
-  improvement String @default("")
-  status    SubmissionStatus @default(COMPLETED)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  aiFeedback    AIFeedback?
-  humanFeedback HumanFeedback?
-  scenario      Scenario       @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model AIFeedback {
-  id                  String     @id @default(uuid())
-  submissionId        String     @unique
-  generatedAt         DateTime   @default(now())
-  analysis            Json
-  overallScore        Float
-  persuasivenessScore Float
-  suggestions         Json
-  submission          Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-}
 
 model OtpModel {
   id          String   @id @default(uuid())
@@ -147,13 +104,6 @@ model OtpModel {
   expiresAt   DateTime
 }
 
-model HumanFeedback {
-  id           String     @id @default(uuid())
-  submissionId String     @unique
-  comments     String
-  createdAt    DateTime   @default(now())
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-}
 
 model Notification {
   id        String           @id @default(uuid())
@@ -163,29 +113,6 @@ model Notification {
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model DocumentPdf {
-  id           String   @id @default(uuid())
-  fileUrl      String
-  createdAt    DateTime @default(now())
-  uploadedAt   DateTime @default(now())
-  filename     String
-  mimetype     String
-  originalname String
-  size         Int
-}
-
-model ReferenceAudio {
-  id              String    @id @default(uuid())
-  audioScenarioId String    @unique
-  audioUrl        String
-  fileFormate     String
-  size            Int
-  createdAt       DateTime  @default(now())
-  scenario        Scenario? @relation(fields: [audioScenarioId], references: [id], onDelete: Cascade)
-
-  @@map("reference_audio")
 }
 
 enum NotificationType {
@@ -201,11 +128,6 @@ enum SubmissionStatus {
   COMPLETED
 }
 
-enum ScenarioStatus {
-  SCHEDULED
-  ACTIVE
-  CLOSED
-}
 
 enum Interval {
   lifetime

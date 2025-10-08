@@ -4,10 +4,6 @@ import { AuthRoutes } from "../modules/auth/auth.route";
 import { UserRoutes } from "../modules/user/user.routes";
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { blogRouter } from "../modules/blogs/blog.route";
-import { DocumentRoutes } from "../modules/Documents/documents.route";
-import { ScenarioRoutes } from "../modules/assessments/scenario.route";
-import { submissionsRoute } from "../modules/submissions/submissions.route";
-import { humanFeedbackRoute } from "../modules/humanFeedBack/human.feed.back.route";
 import { contactRoute } from "../modules/contact/contact.route";
 
 const router = Router();
@@ -33,22 +29,6 @@ const moduleRoutes = [
   {
     path: "/blogs",
     route: blogRouter,
-  },
-  {
-    path: "/documents",
-    route: DocumentRoutes,
-  },
-  {
-    path: "/assessments",
-    route: ScenarioRoutes,
-  },
-  {
-    path: "/submissions",
-    route: submissionsRoute,
-  },
-  {
-    path: "/human-feedback",
-    route: humanFeedbackRoute,
   },
   {
     path: "/contacts",
