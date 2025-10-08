@@ -40,7 +40,7 @@ const createUserIntoDB = async (payload: User) => {
   const accessToken = jwtHelpers.createToken(
     jwtPayload,
     config.jwt.access.secret as string,
-    config.jwt.resetPassword.expiresIn as string
+    config.jwt.access.expiresIn as string
   );
 
   const confirmedLink = `${config.verify.email}?token=${accessToken}`;
@@ -115,12 +115,14 @@ const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) =>
     throw new ApiError(status.NOT_FOUND, "User not found!");
   }
 
+  // Dynamically build update data
+  const userUpdateData: any = {};
+  if (payload?.fullName) userUpdateData.fullName = payload.fullName;
+  if (payload?.profilePic) userUpdateData.profilePic = payload.profilePic;
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-    data: {
-      fullName: payload?.fullName,
-      profilePic: payload?.profilePic || "",
-    },
+    data: userUpdateData,
     select: {
       id: true,
       fullName: true,
@@ -130,28 +132,25 @@ const updateUserProfileIntoDB = async (userId: string, payload: Partial<any>) =>
       isVerified: true,
       createdAt: true,
       updatedAt: true,
-      Profile:true
-    
+      Profile: true,
     },
-  
   });
 
   const profileData = {
-    userId: userId,
+    userId,
     course: payload?.course || "",
     year: payload?.year || "",
   };
+
   const isProfileExist = await prisma.profile.findUnique({
-    where: { userId: userId },
-  }); 
+    where: { userId },
+  });
 
   if (!isProfileExist) {
-    await prisma.profile.create({
-      data: profileData,
-    });
+    await prisma.profile.create({ data: profileData });
   } else {
     await prisma.profile.update({
-      where: { userId: userId },
+      where: { userId },
       data: profileData,
     });
   }
