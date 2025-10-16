@@ -45,3 +45,5 @@ process.on("uncaughtException", () => {
   console.log(`❌ uncaughtException is detected, shutting down...`);
   shutdown();
 });
+
+//// Handle termination signals
